@@ -1,0 +1,13 @@
+{
+   "Author": "Admin",
+   "Comment": "",
+   "Last Problem Type": "High Frequency",
+   "Last Solver Type": "HF Frequency Domain",
+   "Last Solver Type Abb": "f",
+   "Mesh Cells": "107,363",
+   "Mesh Type": "Tetrahedral",
+   "Modeler Unique ID": "5:flexi3.5ghz2vardual-3dbvia_empt10.2_.00125mf_con.cst?e776be7562e8ef027a9729fb9350e1f9?188411:numberofparameters=44::fport=zmin>fmode=1>zre=0>zim=0?fport=zmax>fmode=1>zre=0>zim=0?fport=zmax>fmode=2>zre=0>zim=0::c?a?alpha?b?d?e?er1?f?g?h?hole?hr?i?j?loss?o?p?phi?rpin?rvia?s?t?theta?wc?wg?widcho?wr?ws?wt?xc?xgap?xgate?xvar?xvia?yc?ychock?ygate?yvia?z1?z2?z3?z5?z6?zl",
+   "ProjectVersion": "'# MWS Version: Version 2024.5 - Jun 14 2024 - ACIS 33.0.1 -",
+   "Results": "Frequency Domain: S-Parameter",
+   "Version": "3"
+}

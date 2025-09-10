@@ -1,0 +1,23 @@
+{
+    "parameter sweep": {
+        "options": {
+            "restore parameter values after run": "false",
+            "simulation type": "Frequency",
+            "skip existing combinations": "true",
+            "start active solver": "true"
+        },
+        "sequences": {
+            "Sequence 1": [
+                {
+                    "type": "arbitrary",
+                    "values": "2.2e-13;2.3e-13;2.4e-13;2.6e-13;2.9e-13;3.3e-13;3.8e-13;4.4e-13;5.1e-13;5.9e-13;6.1e-13;7.1e-13;8.2e-13;9.4e-13;1.1e-12;1.3e-12;1.6e-12;2.1e-12",
+                    "varname": "C"
+                },
+                {
+                    "index": 1
+                }
+            ]
+        },
+        "version": 1
+    }
+}

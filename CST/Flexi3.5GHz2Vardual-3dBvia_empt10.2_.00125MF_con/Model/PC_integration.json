@@ -1,0 +1,214 @@
+{
+   "execution": {
+      "classname": "SMAPowerByEmagHPCFrameReduced",
+      "libname": "SMAPowerByEmagUI"
+   },
+   "inputVariables": [
+      {
+         "name": "alpha",
+         "type": "float",
+         "value": 0.0
+      },
+      {
+         "name": "theta",
+         "type": "float",
+         "value": 0.0
+      },
+      {
+         "name": "phi",
+         "type": "float",
+         "value": 0.0
+      },
+      {
+         "name": "z1",
+         "type": "float",
+         "value": 2.0
+      },
+      {
+         "name": "z2",
+         "type": "float",
+         "value": 0.07
+      },
+      {
+         "name": "er1",
+         "type": "float",
+         "value": 10.2
+      },
+      {
+         "name": "z3",
+         "type": "float",
+         "value": 3.175
+      },
+      {
+         "name": "b",
+         "type": "float",
+         "value": 5.5
+      },
+      {
+         "name": "d",
+         "type": "float",
+         "value": 2.0
+      },
+      {
+         "name": "wr",
+         "type": "float",
+         "value": 0.5
+      },
+      {
+         "name": "yr",
+         "type": "float",
+         "value": 1.5
+      },
+      {
+         "name": "yg",
+         "type": "float",
+         "value": 1.0
+      },
+      {
+         "name": "xv",
+         "type": "float",
+         "value": 0.5
+      },
+      {
+         "name": "yv",
+         "type": "float",
+         "value": 1.0
+      },
+      {
+         "name": "z4",
+         "type": "float",
+         "value": 0.3
+      },
+      {
+         "name": "C",
+         "type": "float",
+         "value": 2.1e-12
+      },
+      {
+         "name": "rvia",
+         "type": "string",
+         "value": "0.55/2"
+      },
+      {
+         "name": "xvia",
+         "type": "float",
+         "value": 0.5
+      },
+      {
+         "name": "hole",
+         "type": "string",
+         "value": "0.75/2"
+      },
+      {
+         "name": "yd",
+         "type": "float",
+         "value": 1.0
+      },
+      {
+         "name": "yp",
+         "type": "float",
+         "value": 1.2
+      },
+      {
+         "name": "hr",
+         "type": "float",
+         "value": 0.5
+      },
+      {
+         "name": "xgap",
+         "type": "float",
+         "value": 0.2
+      },
+      {
+         "name": "wg",
+         "type": "float",
+         "value": 0.3
+      },
+      {
+         "name": "i",
+         "type": "float",
+         "value": 0.3
+      },
+      {
+         "name": "j",
+         "type": "float",
+         "value": 0.2
+      },
+      {
+         "name": "loss",
+         "type": "float",
+         "value": 0.00125
+      },
+      {
+         "name": "rpin",
+         "type": "string",
+         "value": "0.4/2"
+      },
+      {
+         "name": "z5",
+         "type": "float",
+         "value": 1.5
+      },
+      {
+         "name": "p",
+         "type": "float",
+         "value": 3.0
+      },
+      {
+         "name": "wc",
+         "type": "float",
+         "value": 0.6
+      },
+      {
+         "name": "ychock",
+         "type": "float",
+         "value": 1.0
+      },
+      {
+         "name": "widcho",
+         "type": "float",
+         "value": 0.25
+      },
+      {
+         "name": "z6",
+         "type": "float",
+         "value": 0.1
+      },
+      {
+         "name": "ygate",
+         "type": "float",
+         "value": 2.0
+      },
+      {
+         "name": "xgate",
+         "type": "float",
+         "value": 2.0
+      },
+      {
+         "name": "s",
+         "type": "float",
+         "value": 1.0
+      },
+      {
+         "name": "ws",
+         "type": "float",
+         "value": 0.6
+      },
+      {
+         "name": "t",
+         "type": "float",
+         "value": 1.5
+      },
+      {
+         "name": "wt",
+         "type": "float",
+         "value": 0.5
+      },
+      {
+         "name": "zl",
+         "type": "float",
+         "value": 0.1
+      }
+   ],
+   "outputVariables": []
+}

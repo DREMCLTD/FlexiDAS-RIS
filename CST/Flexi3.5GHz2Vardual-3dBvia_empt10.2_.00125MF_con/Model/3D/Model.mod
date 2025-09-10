@@ -1,0 +1,8111 @@
+'# MWS Version: Version 2024.5 - Jun 14 2024 - ACIS 33.0.1 -
+
+'# length = mm
+'# frequency = GHz
+'# time = ns
+'# frequency range: fmin = 3 fmax = 4
+'# created = '[VERSION]2021.5|30.0.1|20210628[/VERSION]
+
+
+'@ use template: FSS, Metamaterial - Full Structure.cfg
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+'set the units
+With Units
+    .Geometry "mm"
+    .Frequency "THz"
+    .Voltage "V"
+    .Resistance "Ohm"
+    .Inductance "H"
+    .TemperatureUnit  "Kelvin"
+    .Time "ns"
+    .Current "A"
+    .Conductance "Siemens"
+    .Capacitance "F"
+End With
+
+'----------------------------------------------------------------------------
+
+'set the frequency range
+Solver.FrequencyRange "1", "200"
+
+'----------------------------------------------------------------------------
+
+Plot.DrawBox True
+
+With Background
+     .Type "Normal"
+     .Epsilon "1.0"
+     .Mu "1.0"
+     .Rho "1.204"
+     .ThermalType "Normal"
+     .ThermalConductivity "0.026"
+      .SpecificHeat "1005", "J/K/kg"
+     .XminSpace "0.0"
+     .XmaxSpace "0.0"
+     .YminSpace "0.0"
+     .YmaxSpace "0.0"
+     .ZminSpace "0.0"
+     .ZmaxSpace "0.0"
+End With
+
+With Boundary
+     .Xmin "expanded open"
+     .Xmax "expanded open"
+     .Ymin "expanded open"
+     .Ymax "expanded open"
+     .Zmin "expanded open"
+     .Zmax "expanded open"
+     .Xsymmetry "none"
+     .Ysymmetry "none"
+     .Zsymmetry "none"
+End With
+
+' optimize mesh settings for planar structures
+
+With Mesh
+     .MergeThinPECLayerFixpoints "True"
+     .RatioLimit "20"
+     .AutomeshRefineAtPecLines "True", "6"
+     .FPBAAvoidNonRegUnite "True"
+     .ConsiderSpaceForLowerMeshLimit "False"
+     .MinimumStepNumber "5"
+     .AnisotropicCurvatureRefinement "True"
+     .AnisotropicCurvatureRefinementFSM "True"
+End With
+
+With MeshSettings
+     .SetMeshType "Hex"
+     .Set "RatioLimitGeometry", "20"
+     .Set "EdgeRefinementOn", "1"
+     .Set "EdgeRefinementRatio", "6"
+End With
+
+With MeshSettings
+     .SetMeshType "Tet"
+     .Set "VolMeshGradation", "1.5"
+     .Set "SrfMeshGradation", "1.5"
+End With
+
+With MeshSettings
+     .SetMeshType "HexTLM"
+     .Set "RatioLimitGeometry", "20"
+End With
+
+' change mesh adaption scheme to energy
+' 		(planar structures tend to store high energy
+'     	 locally at edges rather than globally in volume)
+
+MeshAdaption3D.SetAdaptionStrategy "Energy"
+
+' switch on FD-TET setting for accurate farfields
+
+FDSolver.ExtrudeOpenBC "True"
+
+MakeSureParameterExists "alpha", "0"
+SetParameterDescription "alpha", "Rotation angle of E-field Vector (relative to x-axis)"
+MakeSureParameterExists "theta", "0"
+SetParameterDescription "theta", "spherical angle of incident plane wave"
+MakeSureParameterExists "phi", "0"
+SetParameterDescription "phi", "spherical angle of incident plane wave"
+
+With PlaneWave
+     .Reset
+     .Normal "-sinD(theta)*cosD(phi)", "-sinD(theta)*sinD(phi)", "-cosD(theta)"
+     .EVector "cosD(phi)*cosD(theta)*cosD(alpha)-sinD(phi)*sinD(alpha)", "sinD(phi)*cosD(theta)*cosD(alpha)+cosD(phi)*sinD(alpha)", "-sinD(theta)*cosD(alpha)"
+     .Polarization "Linear"
+     .ReferenceFrequency "0.0"
+     .PhaseDifference "-90.0"
+     .CircularDirection "Left"
+     .AxialRatio "1.0"
+     .SetUserDecouplingPlane "False"
+     .Store
+End With
+
+'----------------------------------------------------------------------------
+
+With MeshSettings
+     .SetMeshType "Hex"
+     .Set "Version", 1%
+End With
+
+With Mesh
+     .MeshType "PBA"
+End With
+
+'set the solver type
+ChangeSolverType("HF Time Domain")
+
+'----------------------------------------------------------------------------
+
+'@ define material: FR-4 (loss free)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Material
+     .Reset
+     .Name "FR-4 (loss free)"
+     .Folder ""
+.FrqType "all"
+.Type "Normal"
+.SetMaterialUnit "GHz", "mm"
+.Epsilon "4.3"
+.Mu "1.0"
+.Kappa "0.0"
+.TanD "0.0"
+.TanDFreq "0.0"
+.TanDGiven "False"
+.TanDModel "ConstTanD"
+.KappaM "0.0"
+.TanDM "0.0"
+.TanDMFreq "0.0"
+.TanDMGiven "False"
+.TanDMModel "ConstKappa"
+.DispModelEps "None"
+.DispModelMu "None"
+.DispersiveFittingSchemeEps "General 1st"
+.DispersiveFittingSchemeMu "General 1st"
+.UseGeneralDispersionEps "False"
+.UseGeneralDispersionMu "False"
+.Rho "0.0"
+.ThermalType "Normal"
+.ThermalConductivity "0.3"
+.SetActiveMaterial "all"
+.Colour "0.75", "0.95", "0.85"
+.Wireframe "False"
+.Transparency "0"
+.Create
+End With
+
+'@ new component: component1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Component.New "component1"
+
+'@ define brick: component1:solid1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid1" 
+     .Component "component1" 
+     .Material "FR-4 (loss free)" 
+     .Xrange "-p/2", "p/2" 
+     .Yrange "-p/2", "p/2" 
+     .Zrange "0", "z1" 
+     .Create
+End With
+
+'@ define units
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Units 
+     .Geometry "mm" 
+     .Frequency "GHz" 
+     .Time "ns" 
+     .TemperatureUnit "Kelvin" 
+     .Voltage "V" 
+     .Current "A" 
+     .Resistance "Ohm" 
+     .Conductance "Siemens" 
+     .Capacitance "F" 
+     .Inductance "H" 
+     .SetResultUnit "frequency", "frequency", "" 
+End With
+
+'@ define brick: component1:solid2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid2" 
+     .Component "component1" 
+     .Material "PEC" 
+     .Xrange "-a/2", "a/2" 
+     .Yrange "-a/2", "a/2" 
+     .Zrange "z1", "z1+z2" 
+     .Create
+End With
+
+'@ define material: sub1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Material 
+     .Reset 
+     .Name "sub1"
+     .Folder ""
+     .Rho "0.0"
+     .ThermalType "Normal"
+     .ThermalConductivity "0"
+     .SpecificHeat "0", "J/K/kg"
+     .DynamicViscosity "0"
+     .Emissivity "0"
+     .MetabolicRate "0.0"
+     .VoxelConvection "0.0"
+     .BloodFlow "0"
+     .MechanicsType "Unused"
+     .FrqType "all"
+     .Type "Normal"
+     .MaterialUnit "Frequency", "GHz"
+     .MaterialUnit "Geometry", "mm"
+     .MaterialUnit "Time", "ns"
+     .MaterialUnit "Temperature", "Kelvin"
+     .Epsilon "er1"
+     .Mu "1"
+     .Sigma "0"
+     .TanD "0.0"
+     .TanDFreq "0.0"
+     .TanDGiven "False"
+     .TanDModel "ConstTanD"
+     .SetConstTanDStrategyEps "AutomaticOrder"
+     .ConstTanDModelOrderEps "3"
+     .DjordjevicSarkarUpperFreqEps "0"
+     .SetElParametricConductivity "False"
+     .ReferenceCoordSystem "Global"
+     .CoordSystemType "Cartesian"
+     .SigmaM "0"
+     .TanDM "0.0"
+     .TanDMFreq "0.0"
+     .TanDMGiven "False"
+     .TanDMModel "ConstTanD"
+     .SetConstTanDStrategyMu "AutomaticOrder"
+     .ConstTanDModelOrderMu "3"
+     .DjordjevicSarkarUpperFreqMu "0"
+     .SetMagParametricConductivity "False"
+     .DispModelEps  "None"
+     .DispModelMu "None"
+     .DispersiveFittingSchemeEps "Nth Order"
+     .MaximalOrderNthModelFitEps "10"
+     .ErrorLimitNthModelFitEps "0.1"
+     .UseOnlyDataInSimFreqRangeNthModelEps "False"
+     .DispersiveFittingSchemeMu "Nth Order"
+     .MaximalOrderNthModelFitMu "10"
+     .ErrorLimitNthModelFitMu "0.1"
+     .UseOnlyDataInSimFreqRangeNthModelMu "False"
+     .UseGeneralDispersionEps "False"
+     .UseGeneralDispersionMu "False"
+     .NLAnisotropy "False"
+     .NLAStackingFactor "1"
+     .NLADirectionX "1"
+     .NLADirectionY "0"
+     .NLADirectionZ "0"
+     .Colour "0", "1", "1" 
+     .Wireframe "False" 
+     .Reflection "False" 
+     .Allowoutline "True" 
+     .Transparentoutline "False" 
+     .Transparency "0" 
+     .Create
+End With
+
+'@ define brick: component1:solid3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid3" 
+     .Component "component1" 
+     .Material "sub1" 
+     .Xrange "-a/2", "a/2" 
+     .Yrange "-a/2", "a/2" 
+     .Zrange "z1+z2", "z1+z2+z3" 
+     .Create
+End With
+
+'@ define brick: component1:solid4
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid4" 
+     .Component "component1" 
+     .Material "PEC" 
+     .Xrange "-b/2", "b/2" 
+     .Yrange "-b/2", "b/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ transform: translate component1:solid4
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid4" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ define brick: component1:solid5
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid5" 
+     .Component "component1" 
+     .Material "PEC" 
+     .Xrange "-d/2", "d/2" 
+     .Yrange "-d/2", "d/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ transform: translate component1:solid5
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid5" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ boolean subtract shapes: component1:solid4, component1:solid5
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid4", "component1:solid5"
+
+'@ transform: rotate component1:solid4
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid4" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ define cylinder: component1:solid5
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid5" 
+     .Component "component1" 
+     .Material "PEC" 
+     .OuterRadius "rvia" 
+     .InnerRadius "0" 
+     .Axis "z" 
+     .Zrange "-z2", "z1+z2+z3+z2" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ define brick: component1:solid6
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid6" 
+     .Component "component1" 
+     .Material "PEC" 
+     .Xrange "xgap", "wr/2+xgap" 
+     .Yrange "-hr/2+xvar", "hr/2+xvar" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2*2" 
+     .Create
+End With
+
+'@ transform: mirror component1:solid6
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid6" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .PlaneNormal "1", "0", "0" 
+     .MultipleObjects "True" 
+     .GroupObjects "True" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Mirror" 
+End With
+
+'@ transform: rotate component1:solid6
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid6" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "True" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ transform: rotate component1:solid5
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid5" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "27", "19"
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "39", "27"
+
+'@ define lumped face element: element1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With LumpedFaceElement
+     .Reset 
+     .SetName "element1" 
+     .Folder "" 
+     .SetType "RLCSerial"
+     .SetR "5"
+     .SetL "0.45e-9"
+     .SetC "c"
+     .SetGs "0"
+     .SetI0 "1e-14"
+     .SetT "300"
+     .SetMonitor "True"
+     .CircuitFileName ""
+     .CircuitId "1"
+     .UseCopyOnly "True"
+     .UseRelativePath "False"
+     .SetP1 "True", "-0.29999999999999999", "2.8500000000000001", "4.2699999999999996" 
+     .SetP2 "True", "0.29999999999999999", "2.8500000000000001", "4.2699999999999996" 
+     .SetInvert "False" 
+     .UseProjection "False" 
+     .ReverseProjection "False" 
+     .Create
+End With
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "15", "11"
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "3", "3"
+
+'@ define lumped face element: element2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With LumpedFaceElement
+     .Reset 
+     .SetName "element2" 
+     .Folder "" 
+     .SetType "RLCSerial"
+     .SetR "5"
+     .SetL "0.45e-9"
+     .SetC "c"
+     .SetGs "0"
+     .SetI0 "1e-14"
+     .SetT "300"
+     .SetMonitor "True"
+     .CircuitFileName ""
+     .CircuitId "1"
+     .UseCopyOnly "True"
+     .UseRelativePath "False"
+     .SetP1 "True", "-2.8500000000000001", "0.29999999999999999", "4.2699999999999996" 
+     .SetP2 "True", "-2.8500000000000001", "-0.29999999999999999", "4.2699999999999996" 
+     .SetInvert "False" 
+     .UseProjection "False" 
+     .ReverseProjection "False" 
+     .Create
+End With
+
+'@ transform: translate component1:solid5
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid5" 
+     .Vector "0", "0", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "True" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: translate component1:solid5_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid5_1" 
+     .Vector "0", "0", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "True" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: translate component1:solid5_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid5_2" 
+     .Vector "0", "0", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "True" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: translate component1:solid5_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid5_3" 
+     .Vector "0", "0", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ boolean insert shapes: component1:solid1, component1:solid5_1_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid1", "component1:solid5_1_1" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid3, component1:solid5_1_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid3", "component1:solid5_1_1"
+
+'@ boolean insert shapes: component1:solid1, component1:solid5_2_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid1", "component1:solid5_2_1" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid3, component1:solid5_2_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid3", "component1:solid5_2_1"
+
+'@ boolean insert shapes: component1:solid1, component1:solid5_3_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid1", "component1:solid5_3_1" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid3, component1:solid5_3_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid3", "component1:solid5_3_1"
+
+'@ boolean insert shapes: component1:solid1, component1:solid5_4
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid1", "component1:solid5_4" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid3, component1:solid5_4
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid3", "component1:solid5_4"
+
+'@ define cylinder: component1:solid7
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid7" 
+     .Component "component1" 
+     .Material "PEC" 
+     .OuterRadius "hole" 
+     .InnerRadius "0.0" 
+     .Axis "z" 
+     .Zrange "z1", "z1+z2" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ transform: rotate component1:solid7
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid7" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ boolean subtract shapes: component1:solid2, component1:solid7
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid2", "component1:solid7"
+
+'@ boolean subtract shapes: component1:solid2, component1:solid7_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid2", "component1:solid7_1"
+
+'@ boolean subtract shapes: component1:solid2, component1:solid7_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid2", "component1:solid7_2"
+
+'@ boolean subtract shapes: component1:solid2, component1:solid7_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid2", "component1:solid7_3"
+
+'@ change solver type
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+ChangeSolverType "HF Frequency Domain"
+
+'@ delete plane wave
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+PlaneWave.Delete
+
+'@ define boundaries
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Boundary
+     .Xmin "electric"
+     .Xmax "electric"
+     .Ymin "magnetic"
+     .Ymax "magnetic"
+     .Zmin "open"
+     .Zmax "expanded open"
+     .Xsymmetry "none"
+     .Ysymmetry "none"
+     .Zsymmetry "none"
+     .ApplyInAllDirections "False"
+     .OpenAddSpaceFactor "0.5"
+End With
+
+'@ define port: 1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Port 
+     .Reset 
+     .PortNumber "1" 
+     .Label ""
+     .Folder ""
+     .NumberOfModes "1"
+     .AdjustPolarization "False"
+     .PolarizationAngle "0.0"
+     .ReferencePlaneDistance "0"
+     .TextSize "50"
+     .TextMaxLimit "1"
+     .Coordinates "Full"
+     .Orientation "zmax"
+     .PortOnBound "True"
+     .ClipPickedPortToBound "False"
+     .Xrange "-6.15", "6.15"
+     .Yrange "-6.15", "6.15"
+     .Zrange "5.0557523830846", "5.0557523830846"
+     .XrangeAdd "0.0", "0.0"
+     .YrangeAdd "0.0", "0.0"
+     .ZrangeAdd "0.0", "0.0"
+     .SingleEnded "False"
+     .WaveguideMonitor "False"
+     .Create 
+End With
+
+'@ define frequency range
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solver.FrequencyRange "3", "4"
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "1", "1" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "True"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ define brick: component1:solid7
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid7" 
+     .Component "component1" 
+     .Material "PEC" 
+     .Xrange "wg/2", "-wg/2" 
+     .Yrange "-1.5*yvia", "yvia*1.5" 
+     .Zrange "0", "-z2" 
+     .Create
+End With
+
+'@ transform: rotate component1:solid7
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid7" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "45" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ transform: translate component1:solid7
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid7" 
+     .Vector "xvia*2", "0", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: translate component1:solid7
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid7" 
+     .Vector "0", "-2*yvia", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: rotate component1:solid7
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid7" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ transform: translate component1:solid7_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid7_3" 
+     .Vector "2*xvia", "-2*yvia", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid4_1", "13", "9"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "0"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.598616"
+    .SetViewVector "0.019324", "-0.044776", "-0.998810"
+    .SetConnectedElement1 "component1:solid4_1"
+    .SetConnectedElement2 "component1:solid4_1"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete shape: component1:solid7_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Delete "component1:solid7_1"
+
+'@ delete shape: component1:solid7_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Delete "component1:solid7_3"
+
+'@ delete shape: component1:solid7_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Delete "component1:solid7_2"
+
+'@ define material: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Material
+     .Reset
+     .Name "Copper (annealed)"
+     .Folder ""
+.FrqType "static"
+.Type "Normal"
+.SetMaterialUnit "Hz", "mm"
+.Epsilon "1"
+.Mu "1.0"
+.Kappa "5.8e+007"
+.TanD "0.0"
+.TanDFreq "0.0"
+.TanDGiven "False"
+.TanDModel "ConstTanD"
+.KappaM "0"
+.TanDM "0.0"
+.TanDMFreq "0.0"
+.TanDMGiven "False"
+.TanDMModel "ConstTanD"
+.DispModelEps "None"
+.DispModelMu "None"
+.DispersiveFittingSchemeEps "Nth Order"
+.DispersiveFittingSchemeMu "Nth Order"
+.UseGeneralDispersionEps "False"
+.UseGeneralDispersionMu "False"
+.FrqType "all"
+.Type "Lossy metal"
+.SetMaterialUnit "GHz", "mm"
+.Mu "1.0"
+.Kappa "5.8e+007"
+.Rho "8930.0"
+.ThermalType "Normal"
+.ThermalConductivity "401.0"
+.SpecificHeat "390", "J/K/kg"
+.MetabolicRate "0"
+.BloodFlow "0"
+.VoxelConvection "0"
+.MechanicsType "Isotropic"
+.YoungsModulus "120"
+.PoissonsRatio "0.33"
+.ThermalExpansionRate "17"
+.Colour "1", "1", "0"
+.Wireframe "False"
+.Reflection "False"
+.Allowoutline "True"
+.Transparentoutline "False"
+.Transparency "0"
+.Create
+End With
+
+'@ change material: component1:solid5 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid5", "Copper (annealed)"
+
+'@ change material: component1:solid5_2 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid5_2", "Copper (annealed)"
+
+'@ define cylinder: component1:solid8
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid8" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .OuterRadius "hole" 
+     .InnerRadius "0.0" 
+     .Axis "z" 
+     .Zrange "z1", "z1+z2" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ transform: rotate component1:solid8
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid8" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "180" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ change material: component1:solid8 to: PEC
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid8", "PEC"
+
+'@ change material: component1:solid8_1 to: PEC
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid8_1", "PEC"
+
+'@ change material: component1:solid5 to: PEC
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid5", "PEC"
+
+'@ change material: component1:solid5_2 to: PEC
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid5_2", "PEC"
+
+'@ set mesh properties (Tetrahedral)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Mesh 
+     .MeshType "Tetrahedral" 
+     .SetCreator "High Frequency"
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "Version", 1%
+     'MAX CELL - WAVELENGTH REFINEMENT 
+     .Set "StepsPerWaveNear", "4" 
+     .Set "StepsPerWaveFar", "4" 
+     .Set "PhaseErrorNear", "0.02" 
+     .Set "PhaseErrorFar", "0.02" 
+     .Set "CellsPerWavelengthPolicy", "automatic" 
+     'MAX CELL - GEOMETRY REFINEMENT 
+     .Set "StepsPerBoxNear", "15" 
+     .Set "StepsPerBoxFar", "5" 
+     .Set "ModelBoxDescrNear", "maxedge" 
+     .Set "ModelBoxDescrFar", "maxedge" 
+     'MIN CELL 
+     .Set "UseRatioLimit", "0" 
+     .Set "RatioLimit", "100" 
+     .Set "MinStep", "5" 
+     'MESHING METHOD 
+     .SetMeshType "Unstr" 
+     .Set "Method", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "CurvatureOrder", "1" 
+     .Set "CurvatureOrderPolicy", "automatic" 
+     .Set "CurvRefinementControl", "NormalTolerance" 
+     .Set "NormalTolerance", "22.5" 
+     .Set "SrfMeshGradation", "1.5" 
+     .Set "SrfMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "UseMaterials",  "1" 
+     .Set "MoveMesh", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "All" 
+     .Set "AutomaticEdgeRefinement",  "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "UseAnisoCurveRefinement", "1" 
+     .Set "UseSameSrfAndVolMeshGradation", "1" 
+     .Set "VolMeshGradation", "1.5" 
+     .Set "VolMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "SmallFeatureSize", "0" 
+     .Set "CoincidenceTolerance", "1e-06" 
+     .Set "SelfIntersectionCheck", "1" 
+     .Set "OptimizeForPlanarStructures", "0" 
+End With 
+With Mesh 
+     .SetParallelMesherMode "Tet", "maximum" 
+     .SetMaxParallelMesherThreads "Tet", "1" 
+End With
+
+'@ define Floquet port boundaries
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With FloquetPort
+     .Reset
+     .SetDialogTheta "0" 
+     .SetDialogPhi "0" 
+     .SetPolarizationIndependentOfScanAnglePhi "0.0", "False"  
+     .SetSortCode "+beta/pw" 
+     .SetCustomizedListFlag "False" 
+     .Port "Zmin" 
+     .SetNumberOfModesConsidered "1" 
+     .SetDistanceToReferencePlane "0.0" 
+     .SetUseCircularPolarization "False" 
+     .Port "Zmax" 
+     .SetNumberOfModesConsidered "2" 
+     .SetDistanceToReferencePlane "0.0" 
+     .SetUseCircularPolarization "False" 
+End With
+
+'@ define boundaries
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Boundary
+     .Xmin "unit cell"
+     .Xmax "unit cell"
+     .Ymin "unit cell"
+     .Ymax "unit cell"
+     .Zmin "expanded open"
+     .Zmax "expanded open"
+     .Xsymmetry "none"
+     .Ysymmetry "none"
+     .Zsymmetry "none"
+     .ApplyInAllDirections "False"
+     .OpenAddSpaceFactor "0.5"
+     .XPeriodicShift "0.0"
+     .YPeriodicShift "0.0"
+     .ZPeriodicShift "0.0"
+     .PeriodicUseConstantAngles "False"
+     .SetPeriodicBoundaryAngles "0.0", "0.0"
+     .SetPeriodicBoundaryAnglesDirection "outward"
+     .UnitCellFitToBoundingBox "True"
+     .UnitCellDs1 "0.0"
+     .UnitCellDs2 "0.0"
+     .UnitCellAngle "90.0"
+End With
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "True"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ delete port: port1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Port.Delete "1"
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "True"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "1"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ define frequency domain solver acceleration
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With FDSolver 
+     .MPIParallelization "False"
+     .UseDistributedComputing "True"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "1"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "True"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "1"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ define frequency domain solver acceleration
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With FDSolver 
+     .MPIParallelization "False"
+     .UseDistributedComputing "True"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "1"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "0"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ define frequency domain solver acceleration
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With FDSolver 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "0"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+'@ change material: component1:solid1 to: sub1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid1", "sub1"
+
+'@ define frequency range
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solver.FrequencyRange "1", "8"
+
+'@ set mesh properties (Tetrahedral)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Mesh 
+     .MeshType "Tetrahedral" 
+     .SetCreator "High Frequency"
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "Version", 1%
+     'MAX CELL - WAVELENGTH REFINEMENT 
+     .Set "StepsPerWaveNear", "4" 
+     .Set "StepsPerWaveFar", "4" 
+     .Set "PhaseErrorNear", "0.02" 
+     .Set "PhaseErrorFar", "0.02" 
+     .Set "CellsPerWavelengthPolicy", "automatic" 
+     'MAX CELL - GEOMETRY REFINEMENT 
+     .Set "StepsPerBoxNear", "10" 
+     .Set "StepsPerBoxFar", "0" 
+     .Set "ModelBoxDescrNear", "maxedge" 
+     .Set "ModelBoxDescrFar", "maxedge" 
+     'MIN CELL 
+     .Set "UseRatioLimit", "0" 
+     .Set "RatioLimit", "100" 
+     .Set "MinStep", "0" 
+     'MESHING METHOD 
+     .SetMeshType "Unstr" 
+     .Set "Method", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "CurvatureOrder", "1" 
+     .Set "CurvatureOrderPolicy", "automatic" 
+     .Set "CurvRefinementControl", "NormalTolerance" 
+     .Set "NormalTolerance", "22.5" 
+     .Set "SrfMeshGradation", "1.5" 
+     .Set "SrfMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "UseMaterials",  "1" 
+     .Set "MoveMesh", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "All" 
+     .Set "AutomaticEdgeRefinement",  "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "UseAnisoCurveRefinement", "1" 
+     .Set "UseSameSrfAndVolMeshGradation", "1" 
+     .Set "VolMeshGradation", "1.5" 
+     .Set "VolMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "SmallFeatureSize", "0" 
+     .Set "CoincidenceTolerance", "1e-06" 
+     .Set "SelfIntersectionCheck", "1" 
+     .Set "OptimizeForPlanarStructures", "0" 
+End With 
+With Mesh 
+     .SetParallelMesherMode "Tet", "maximum" 
+     .SetMaxParallelMesherThreads "Tet", "1" 
+End With
+
+'@ define frequency range
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solver.FrequencyRange "1", "8"
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ define brick: component1:solid9
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid9" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-e/2", "e/2" 
+     .Yrange "-e/2", "e/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ change material: component1:solid9 to: PEC
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid9", "PEC"
+
+'@ transform: translate component1:solid9
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid9" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: rotate component1:solid9
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid9" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ define frequency range
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solver.FrequencyRange "3", "4"
+
+'@ define brick: component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid10" 
+     .Component "component1" 
+     .Material "PEC" 
+     .Xrange "-f/2", "f/2" 
+     .Yrange "-f/2", "f/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ transform: translate component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid10" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: rotate component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid10" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ boolean insert shapes: component1:solid9, component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9", "component1:solid10" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid9_1, component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9_1", "component1:solid10" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid9_2, component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9_2", "component1:solid10" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid9_3, component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid9_3", "component1:solid10"
+
+'@ boolean insert shapes: component1:solid9, component1:solid10_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9", "component1:solid10_1" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid9_1, component1:solid10_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9_1", "component1:solid10_1" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid9_2, component1:solid10_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9_2", "component1:solid10_1" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid9_3, component1:solid10_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid9_3", "component1:solid10_1"
+
+'@ boolean insert shapes: component1:solid9, component1:solid10_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9", "component1:solid10_2" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid9_1, component1:solid10_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9_1", "component1:solid10_2" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid9_2, component1:solid10_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9_2", "component1:solid10_2" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid9_3, component1:solid10_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid9_3", "component1:solid10_2"
+
+'@ boolean insert shapes: component1:solid9, component1:solid10_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9", "component1:solid10_3" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid9_1, component1:solid10_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9_1", "component1:solid10_3" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid9_2, component1:solid10_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid9_2", "component1:solid10_3" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid9_3, component1:solid10_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid9_3", "component1:solid10_3"
+
+'@ define brick: component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid10" 
+     .Component "component1" 
+     .Material "PEC" 
+     .Xrange "-g/2", "g/2" 
+     .Yrange "-g/2", "g/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ transform: translate component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid10" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: rotate component1:solid10
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid10" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ delete shapes
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Delete "component1:solid5" 
+Solid.Delete "component1:solid5_2"
+
+'@ define cylinder: component1:solid11
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid11" 
+     .Component "component1" 
+     .Material "sub1" 
+     .OuterRadius "rvia" 
+     .InnerRadius "0" 
+     .Axis "z" 
+     .Zrange "z1", "z1+z2+z3+z2" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ change material: component1:solid11 to: PEC
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid11", "PEC"
+
+'@ transform: rotate component1:solid11
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid11" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "180" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ define cylinder: component1:solid12
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid12" 
+     .Component "component1" 
+     .Material "sub1" 
+     .OuterRadius "rvia" 
+     .InnerRadius "0.0" 
+     .Axis "z" 
+     .Zrange "0", "z1" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ transform: rotate component1:solid12
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid12" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "180" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ boolean add shapes: component1:solid1, component1:solid12
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Add "component1:solid1", "component1:solid12"
+
+'@ boolean add shapes: component1:solid1, component1:solid12_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Add "component1:solid1", "component1:solid12_1"
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "True"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "1"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ define frequency domain solver acceleration
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With FDSolver 
+     .MPIParallelization "False"
+     .UseDistributedComputing "True"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "1"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "True"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEndpointFromId "component1:solid6", "12"
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEndpointFromId "component1:solid6", "4"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "1"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-1.271003"
+    .SetViewVector "0.000000", "-0.000008", "-1.000000"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEndpointFromId "component1:solid6", "10"
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEndpointFromId "component1:solid6", "2"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "2"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.309295"
+    .SetViewVector "-0.000000", "-0.000003", "-1.000000"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "16", "12"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "3"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.174655"
+    .SetViewVector "0.000000", "-0.000003", "-1.000000"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "1", "1"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "4"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.083696"
+    .SetViewVector "0.000000", "-0.000004", "-1.000000"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid7", "8", "8"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "5"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.385956"
+    .SetViewVector "0.093217", "0.210946", "0.973043"
+    .SetConnectedElement1 "component1:solid7"
+    .SetConnectedElement2 "component1:solid7"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ define brick: component1:solid12
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid12" 
+     .Component "component1" 
+     .Material "PEC" 
+     .Xrange "-wg/2", "wg/2" 
+     .Yrange "0", "a/2" 
+     .Zrange "0", "-z2" 
+     .Create
+End With
+
+'@ change material: component1:solid10 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid10", "Copper (annealed)"
+
+'@ change material: component1:solid10_1 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid10_1", "Copper (annealed)"
+
+'@ change material: component1:solid10_2 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid10_2", "Copper (annealed)"
+
+'@ change material: component1:solid10_3 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid10_3", "Copper (annealed)"
+
+'@ change material: component1:solid4 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid4", "Copper (annealed)"
+
+'@ change material: component1:solid4_1 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid4_1", "Copper (annealed)"
+
+'@ change material: component1:solid4_2 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid4_2", "Copper (annealed)"
+
+'@ change material: component1:solid4_3 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid4_3", "Copper (annealed)"
+
+'@ change material: component1:solid9 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid9", "Copper (annealed)"
+
+'@ change material: component1:solid9_1 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid9_1", "Copper (annealed)"
+
+'@ change material: component1:solid9_2 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid9_2", "Copper (annealed)"
+
+'@ change material: component1:solid9_3 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid9_3", "Copper (annealed)"
+
+'@ change material: component1:solid12 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid12", "Copper (annealed)"
+
+'@ change material: component1:solid7 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid7", "Copper (annealed)"
+
+'@ change material: component1:solid5_1 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid5_1", "Copper (annealed)"
+
+'@ change material: component1:solid5_3 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid5_3", "Copper (annealed)"
+
+'@ change material: component1:solid7 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid7", "Copper (annealed)"
+
+'@ change material: component1:solid2 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid2", "Copper (annealed)"
+
+'@ change material: component1:solid6 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid6", "Copper (annealed)"
+
+'@ change material: component1:solid11 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid11", "Copper (annealed)"
+
+'@ change material: component1:solid11_1 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid11_1", "Copper (annealed)"
+
+'@ change material: component1:solid8 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid8", "Copper (annealed)"
+
+'@ change material: component1:solid8_1 to: Copper (annealed)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.ChangeMaterial "component1:solid8_1", "Copper (annealed)"
+
+'@ define material: sub1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Material 
+     .Reset 
+     .Name "sub1"
+     .Folder ""
+     .Rho "0.0"
+     .ThermalType "Normal"
+     .ThermalConductivity "0"
+     .SpecificHeat "0", "J/K/kg"
+     .DynamicViscosity "0"
+     .Emissivity "0"
+     .MetabolicRate "0.0"
+     .VoxelConvection "0.0"
+     .BloodFlow "0"
+     .MechanicsType "Unused"
+     .FrqType "all"
+     .Type "Normal"
+     .MaterialUnit "Frequency", "GHz"
+     .MaterialUnit "Geometry", "mm"
+     .MaterialUnit "Time", "ns"
+     .MaterialUnit "Temperature", "Kelvin"
+     .Epsilon "er1"
+     .Mu "1"
+     .Sigma "0"
+     .TanD "0.001"
+     .TanDFreq "10"
+     .TanDGiven "True"
+     .TanDModel "ConstTanD"
+     .SetConstTanDStrategyEps "AutomaticOrder"
+     .ConstTanDModelOrderEps "3"
+     .DjordjevicSarkarUpperFreqEps "0"
+     .SetElParametricConductivity "False"
+     .ReferenceCoordSystem "Global"
+     .CoordSystemType "Cartesian"
+     .SigmaM "0"
+     .TanDM "0.0"
+     .TanDMFreq "0.0"
+     .TanDMGiven "False"
+     .TanDMModel "ConstTanD"
+     .SetConstTanDStrategyMu "AutomaticOrder"
+     .ConstTanDModelOrderMu "3"
+     .DjordjevicSarkarUpperFreqMu "0"
+     .SetMagParametricConductivity "False"
+     .DispModelEps "None"
+     .DispModelMu "None"
+     .DispersiveFittingSchemeEps "Nth Order"
+     .MaximalOrderNthModelFitEps "10"
+     .ErrorLimitNthModelFitEps "0.1"
+     .UseOnlyDataInSimFreqRangeNthModelEps "False"
+     .DispersiveFittingSchemeMu "Nth Order"
+     .MaximalOrderNthModelFitMu "10"
+     .ErrorLimitNthModelFitMu "0.1"
+     .UseOnlyDataInSimFreqRangeNthModelMu "False"
+     .UseGeneralDispersionEps "False"
+     .UseGeneralDispersionMu "False"
+     .NLAnisotropy "False"
+     .NLAStackingFactor "1"
+     .NLADirectionX "1"
+     .NLADirectionY "0"
+     .NLADirectionZ "0"
+     .Colour "0", "1", "1" 
+     .Wireframe "False" 
+     .Reflection "False" 
+     .Allowoutline "True" 
+     .Transparentoutline "False" 
+     .Transparency "0" 
+     .Create
+End With
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEndpointFromId "component1:solid4_1", "12"
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEndpointFromId "component1:solid4_2", "12"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "6"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.058119"
+    .SetViewVector "0.052014", "-0.004669", "-0.998635"
+    .SetConnectedElement1 "component1:solid4_1"
+    .SetConnectedElement2 "component1:solid4_2"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "10", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "7"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.416796"
+    .SetViewVector "0.000000", "-0.000010", "-1.000000"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEndpointFromId "component1:solid4_1", "10"
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEndpointFromId "component1:solid4", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "8"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.401054"
+    .SetViewVector "-0.003491", "-0.000002", "-0.999994"
+    .SetConnectedElement1 "component1:solid4_1"
+    .SetConnectedElement2 "component1:solid4"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ define brick: component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid13" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-h/2", "h/2" 
+     .Yrange "-h/2", "h/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ define brick: component1:solid14
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid14" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-i/2", "i/2" 
+     .Yrange "-i/2", "i/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ transform: translate component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid13" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: rotate component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid13" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ boolean insert shapes: component1:solid10, component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10", "component1:solid13" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid10_1, component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10_1", "component1:solid13" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid10_2, component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10_2", "component1:solid13" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid10_3, component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid10_3", "component1:solid13"
+
+'@ boolean insert shapes: component1:solid10, component1:solid13_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10", "component1:solid13_1" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid10_1, component1:solid13_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10_1", "component1:solid13_1" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid10_2, component1:solid13_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10_2", "component1:solid13_1" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid10_3, component1:solid13_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid10_3", "component1:solid13_1"
+
+'@ boolean insert shapes: component1:solid10, component1:solid13_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10", "component1:solid13_2" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid10_1, component1:solid13_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10_1", "component1:solid13_2" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid10_2, component1:solid13_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10_2", "component1:solid13_2" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid10_3, component1:solid13_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid10_3", "component1:solid13_2"
+
+'@ boolean insert shapes: component1:solid10, component1:solid13_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10", "component1:solid13_3" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid10_1, component1:solid13_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10_1", "component1:solid13_3" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid10_2, component1:solid13_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid10_2", "component1:solid13_3" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid10_3, component1:solid13_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid10_3", "component1:solid13_3"
+
+'@ transform: translate component1:solid14
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid14" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: rotate component1:solid14
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid14" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ define brick: component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid15" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-j/2", "j/2" 
+     .Yrange "-j/2", "j/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ transform: translate component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid15" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: rotate component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid15" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ boolean insert shapes: component1:solid14, component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14", "component1:solid15" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid14_1, component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14_1", "component1:solid15" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid14_2, component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14_2", "component1:solid15" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid14_3, component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid14_3", "component1:solid15"
+
+'@ boolean insert shapes: component1:solid14, component1:solid15_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14", "component1:solid15_1" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid14_1, component1:solid15_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14_1", "component1:solid15_1" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid14_2, component1:solid15_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14_2", "component1:solid15_1" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid14_3, component1:solid15_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid14_3", "component1:solid15_1"
+
+'@ boolean insert shapes: component1:solid14, component1:solid15_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14", "component1:solid15_2" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid14_1, component1:solid15_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14_1", "component1:solid15_2" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid14_2, component1:solid15_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14_2", "component1:solid15_2" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid14_3, component1:solid15_2
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid14_3", "component1:solid15_2"
+
+'@ boolean insert shapes: component1:solid14, component1:solid15_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14", "component1:solid15_3" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid14_1, component1:solid15_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14_1", "component1:solid15_3" 
+     .Version 1
+End With
+
+'@ boolean insert shapes: component1:solid14_2, component1:solid15_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Solid
+     .Version 10
+     .Insert "component1:solid14_2", "component1:solid15_3" 
+     .Version 1
+End With
+
+'@ boolean subtract shapes: component1:solid14_3, component1:solid15_3
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Subtract "component1:solid14_3", "component1:solid15_3"
+
+'@ define brick: component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid15" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-o/2", "o/2" 
+     .Yrange "-o/2", "o/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ transform: translate component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid15" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: rotate component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid15" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ delete shapes
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Delete "component1:solid10" 
+Solid.Delete "component1:solid10_1" 
+Solid.Delete "component1:solid10_2" 
+Solid.Delete "component1:solid10_3" 
+Solid.Delete "component1:solid14" 
+Solid.Delete "component1:solid14_1" 
+Solid.Delete "component1:solid14_2" 
+Solid.Delete "component1:solid14_3" 
+Solid.Delete "component1:solid15" 
+Solid.Delete "component1:solid15_1" 
+Solid.Delete "component1:solid15_2" 
+Solid.Delete "component1:solid15_3"
+
+'@ delete shapes
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Delete "component1:solid9" 
+Solid.Delete "component1:solid9_1" 
+Solid.Delete "component1:solid9_2" 
+Solid.Delete "component1:solid9_3"
+
+'@ define brick: component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid13" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-e/2", "e/2" 
+     .Yrange "-e/2", "e/2" 
+     .Zrange "z1+z2+z3", "z1+z2+z3+z2" 
+     .Create
+End With
+
+'@ transform: translate component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid13" 
+     .Vector "xc", "yc", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: rotate component1:solid13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid13" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "All" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "True"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ set mesh properties (Tetrahedral)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Mesh 
+     .MeshType "Tetrahedral" 
+     .SetCreator "High Frequency"
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "Version", 1%
+     'MAX CELL - WAVELENGTH REFINEMENT 
+     .Set "StepsPerWaveNear", "4" 
+     .Set "StepsPerWaveFar", "4" 
+     .Set "PhaseErrorNear", "0.02" 
+     .Set "PhaseErrorFar", "0.02" 
+     .Set "CellsPerWavelengthPolicy", "automatic" 
+     'MAX CELL - GEOMETRY REFINEMENT 
+     .Set "StepsPerBoxNear", "15" 
+     .Set "StepsPerBoxFar", "5" 
+     .Set "ModelBoxDescrNear", "maxedge" 
+     .Set "ModelBoxDescrFar", "maxedge" 
+     'MIN CELL 
+     .Set "UseRatioLimit", "0" 
+     .Set "RatioLimit", "100" 
+     .Set "MinStep", "5" 
+     'MESHING METHOD 
+     .SetMeshType "Unstr" 
+     .Set "Method", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "CurvatureOrder", "1" 
+     .Set "CurvatureOrderPolicy", "automatic" 
+     .Set "CurvRefinementControl", "NormalTolerance" 
+     .Set "NormalTolerance", "22.5" 
+     .Set "SrfMeshGradation", "1.5" 
+     .Set "SrfMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "UseMaterials",  "1" 
+     .Set "MoveMesh", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "All" 
+     .Set "AutomaticEdgeRefinement",  "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "UseAnisoCurveRefinement", "1" 
+     .Set "UseSameSrfAndVolMeshGradation", "1" 
+     .Set "VolMeshGradation", "1.5" 
+     .Set "VolMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "SmallFeatureSize", "0" 
+     .Set "CoincidenceTolerance", "1e-06" 
+     .Set "SelfIntersectionCheck", "1" 
+     .Set "OptimizeForPlanarStructures", "0" 
+End With 
+With Mesh 
+     .SetParallelMesherMode "Tet", "maximum" 
+     .SetMaxParallelMesherThreads "Tet", "1" 
+End With
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Third" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "True"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ switch working plane
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Plot.DrawWorkplane "false"
+
+'@ switch bounding box
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Plot.DrawBox "False"
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "9"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-3.250140"
+    .SetViewVector "-0.469843", "-0.342040", "-0.813791"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid1", "24", "14"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "10"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.748802"
+    .SetViewVector "-0.469843", "-0.342037", "-0.813793"
+    .SetConnectedElement1 "component1:solid1"
+    .SetConnectedElement2 "component1:solid1"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "11"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.476148"
+    .SetViewVector "-0.469843", "-0.342038", "-0.813792"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid1", "24", "14"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "12"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.684367"
+    .SetViewVector "-0.469844", "-0.342032", "-0.813794"
+    .SetConnectedElement1 "component1:solid1"
+    .SetConnectedElement2 "component1:solid1"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "13"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.473349"
+    .SetViewVector "-1.000000", "-0.000004", "0.000000"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid1", "24", "14"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "14"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.243688"
+    .SetViewVector "-1.000000", "-0.000004", "0.000000"
+    .SetConnectedElement1 "component1:solid1"
+    .SetConnectedElement2 "component1:solid1"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 13
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "13"
+End With
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "15"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.074974"
+    .SetViewVector "-1.000000", "-0.000004", "0.000000"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "16"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.176530"
+    .SetViewVector "-1.000000", "-0.000004", "0.000000"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid1", "24", "14"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "17"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.658394"
+    .SetViewVector "-1.000000", "-0.000007", "0.000000"
+    .SetConnectedElement1 "component1:solid1"
+    .SetConnectedElement2 "component1:solid1"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid2", "10", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "18"
+    .SetOrientation "Smart Mode"
+    .SetDistance "2.829969"
+    .SetViewVector "-0.469842", "-0.342042", "-0.813791"
+    .SetConnectedElement1 "component1:solid2"
+    .SetConnectedElement2 "component1:solid2"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid2", "10", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "19"
+    .SetOrientation "Smart Mode"
+    .SetDistance "2.173728"
+    .SetViewVector "-0.115627", "-0.524889", "-0.843280"
+    .SetConnectedElement1 "component1:solid2"
+    .SetConnectedElement2 "component1:solid2"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "20"
+    .SetOrientation "Smart Mode"
+    .SetDistance "2.488294"
+    .SetViewVector "-0.758980", "-0.407910", "-0.507503"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 20
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "20"
+End With
+
+'@ delete dimension 19
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "19"
+End With
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "10", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "21"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.284106"
+    .SetViewVector "0.000000", "-0.000010", "-1.000000"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid13", "2", "2"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "22"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.058930"
+    .SetViewVector "0.000000", "-0.000010", "-1.000000"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid4", "31", "24"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "23"
+    .SetOrientation "Smart Mode"
+    .SetDistance "2.219798"
+    .SetViewVector "0.000000", "-0.000010", "-1.000000"
+    .SetConnectedElement1 "component1:solid4"
+    .SetConnectedElement2 "component1:solid4"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid4_3", "16", "12"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "24"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.876455"
+    .SetViewVector "0.000000", "-0.000021", "-1.000000"
+    .SetConnectedElement1 "component1:solid4_3"
+    .SetConnectedElement2 "component1:solid4_3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "13", "9"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "25"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.492065"
+    .SetViewVector "-0.000000", "-0.000012", "-1.000000"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "2", "2"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "26"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.427781"
+    .SetViewVector "0.000000", "-0.000004", "-1.000000"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 24
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "24"
+End With
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid4", "13", "9"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "27"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.567721"
+    .SetViewVector "0.000000", "-0.000026", "-1.000000"
+    .SetConnectedElement1 "component1:solid4"
+    .SetConnectedElement2 "component1:solid4"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 27
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "27"
+End With
+
+'@ delete dimension 22
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "22"
+End With
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid13_2", "2", "2"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "28"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.695817"
+    .SetViewVector "0.000000", "-0.000026", "-1.000000"
+    .SetConnectedElement1 "component1:solid13_2"
+    .SetConnectedElement2 "component1:solid13_2"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 25
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "25"
+End With
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "25", "17"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "29"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-7.003203"
+    .SetViewVector "0.000000", "-0.000026", "-1.000000"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid4", "16", "12"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "30"
+    .SetOrientation "Smart Mode"
+    .SetDistance "4.182178"
+    .SetViewVector "0.000000", "-0.000026", "-1.000000"
+    .SetConnectedElement1 "component1:solid4"
+    .SetConnectedElement2 "component1:solid4"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid8", "2", "3", "0"
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid8", "2", "3", "2"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "31"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.851472"
+    .SetViewVector "-0.482563", "-0.262263", "-0.835674"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 31
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "31"
+End With
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid5_3", "2", "3", "1"
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEndpointFromId "component1:solid5_3", "2"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "32"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.370599"
+    .SetViewVector "-0.482563", "-0.262263", "-0.835674"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 "component1:solid5_3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid8", "2", "3", "0"
+
+'@ pick end point
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid8", "2", "3", "2"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "33"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-2.541144"
+    .SetViewVector "-0.482563", "-0.262263", "-0.835674"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid12", "11", "3"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "34"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.041382"
+    .SetViewVector "1.000000", "-0.000001", "0.000000"
+    .SetConnectedElement1 "component1:solid12"
+    .SetConnectedElement2 "component1:solid12"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid2", "19", "11"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "35"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.044939"
+    .SetViewVector "1.000000", "-0.000001", "0.000000"
+    .SetConnectedElement1 "component1:solid2"
+    .SetConnectedElement2 "component1:solid2"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid1", "23", "15"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "36"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.091937"
+    .SetViewVector "1.000000", "-0.000004", "0.000000"
+    .SetConnectedElement1 "component1:solid1"
+    .SetConnectedElement2 "component1:solid1"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "19", "11"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "37"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.246867"
+    .SetViewVector "1.000000", "-0.000004", "0.000000"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ boolean add shapes: component1:solid2, component1:solid8
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Add "component1:solid2", "component1:solid8"
+
+'@ boolean add shapes: component1:solid2, component1:solid8_1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Add "component1:solid2", "component1:solid8_1"
+
+'@ delete shapes
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Delete "component1:solid11" 
+Solid.Delete "component1:solid11_1" 
+Solid.Delete "component1:solid5_1" 
+Solid.Delete "component1:solid5_3"
+
+'@ delete dimension 32
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "32"
+End With
+
+'@ define cylinder: component1:solid14
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid14" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .OuterRadius "rvia" 
+     .InnerRadius "rpin" 
+     .Axis "z" 
+     .Zrange "z1", "z1+z2+z3+z2" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ transform: rotate component1:solid14
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid14" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "180" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ define cylinder: component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid15" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .OuterRadius "rvia" 
+     .InnerRadius "rpin" 
+     .Axis "z" 
+     .Zrange "0", "z1+z2+z3+z2" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ transform: rotate component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid15" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ transform: rotate component1:solid15
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid15" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "180" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "0"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ define frequency domain solver acceleration
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With FDSolver 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+With MeshSettings
+     .SetMeshType "Unstr"
+     .Set "UseDC", "0"
+End With
+UseDistributedComputingForParameters "False"
+MaxNumberOfDistributedComputingParameters "2"
+UseDistributedComputingMemorySetting "False"
+MinDistributedComputingMemoryLimit "0"
+UseDistributedComputingSharedDirectory "False"
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "38"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-1.654163"
+    .SetViewVector "-0.883281", "-0.327713", "-0.335289"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid1", "24", "14"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "39"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.655720"
+    .SetViewVector "-0.883283", "-0.327701", "-0.335295"
+    .SetConnectedElement1 "component1:solid1"
+    .SetConnectedElement2 "component1:solid1"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Third" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ set mesh properties (Tetrahedral)
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Mesh 
+     .MeshType "Tetrahedral" 
+     .SetCreator "High Frequency"
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "Version", 1%
+     'MAX CELL - WAVELENGTH REFINEMENT 
+     .Set "StepsPerWaveNear", "4" 
+     .Set "StepsPerWaveFar", "4" 
+     .Set "PhaseErrorNear", "0.02" 
+     .Set "PhaseErrorFar", "0.02" 
+     .Set "CellsPerWavelengthPolicy", "automatic" 
+     'MAX CELL - GEOMETRY REFINEMENT 
+     .Set "StepsPerBoxNear", "10" 
+     .Set "StepsPerBoxFar", "3" 
+     .Set "ModelBoxDescrNear", "maxedge" 
+     .Set "ModelBoxDescrFar", "maxedge" 
+     'MIN CELL 
+     .Set "UseRatioLimit", "0" 
+     .Set "RatioLimit", "100" 
+     .Set "MinStep", "3" 
+     'MESHING METHOD 
+     .SetMeshType "Unstr" 
+     .Set "Method", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "CurvatureOrder", "1" 
+     .Set "CurvatureOrderPolicy", "automatic" 
+     .Set "CurvRefinementControl", "NormalTolerance" 
+     .Set "NormalTolerance", "22.5" 
+     .Set "SrfMeshGradation", "1.5" 
+     .Set "SrfMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "UseMaterials",  "1" 
+     .Set "MoveMesh", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "All" 
+     .Set "AutomaticEdgeRefinement",  "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "UseAnisoCurveRefinement", "1" 
+     .Set "UseSameSrfAndVolMeshGradation", "1" 
+     .Set "VolMeshGradation", "1.5" 
+     .Set "VolMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "SmallFeatureSize", "0" 
+     .Set "CoincidenceTolerance", "1e-06" 
+     .Set "SelfIntersectionCheck", "1" 
+     .Set "OptimizeForPlanarStructures", "0" 
+End With 
+With Mesh 
+     .SetParallelMesherMode "Tet", "maximum" 
+     .SetMaxParallelMesherThreads "Tet", "1" 
+End With
+
+'@ define material: sub1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Material 
+     .Reset 
+     .Name "sub1"
+     .Folder ""
+     .Rho "0.0"
+     .ThermalType "Normal"
+     .ThermalConductivity "0"
+     .SpecificHeat "0", "J/K/kg"
+     .DynamicViscosity "0"
+     .Emissivity "0"
+     .MetabolicRate "0.0"
+     .VoxelConvection "0.0"
+     .BloodFlow "0"
+     .MechanicsType "Unused"
+     .FrqType "all"
+     .Type "Normal"
+     .MaterialUnit "Frequency", "GHz"
+     .MaterialUnit "Geometry", "mm"
+     .MaterialUnit "Time", "ns"
+     .MaterialUnit "Temperature", "Kelvin"
+     .Epsilon "er1"
+     .Mu "1"
+     .Sigma "0.0"
+     .TanD "0.002"
+     .TanDFreq "10"
+     .TanDGiven "True"
+     .TanDModel "ConstTanD"
+     .SetConstTanDStrategyEps "AutomaticOrder"
+     .ConstTanDModelOrderEps "3"
+     .DjordjevicSarkarUpperFreqEps "0"
+     .SetElParametricConductivity "False"
+     .ReferenceCoordSystem "Global"
+     .CoordSystemType "Cartesian"
+     .SigmaM "0"
+     .TanDM "0.0"
+     .TanDMFreq "0.0"
+     .TanDMGiven "False"
+     .TanDMModel "ConstTanD"
+     .SetConstTanDStrategyMu "AutomaticOrder"
+     .ConstTanDModelOrderMu "3"
+     .DjordjevicSarkarUpperFreqMu "0"
+     .SetMagParametricConductivity "False"
+     .DispModelEps "None"
+     .DispModelMu "None"
+     .DispersiveFittingSchemeEps "Nth Order"
+     .MaximalOrderNthModelFitEps "10"
+     .ErrorLimitNthModelFitEps "0.1"
+     .UseOnlyDataInSimFreqRangeNthModelEps "False"
+     .DispersiveFittingSchemeMu "Nth Order"
+     .MaximalOrderNthModelFitMu "10"
+     .ErrorLimitNthModelFitMu "0.1"
+     .UseOnlyDataInSimFreqRangeNthModelMu "False"
+     .UseGeneralDispersionEps "False"
+     .UseGeneralDispersionMu "False"
+     .NLAnisotropy "False"
+     .NLAStackingFactor "1"
+     .NLADirectionX "1"
+     .NLADirectionY "0"
+     .NLADirectionZ "0"
+     .Colour "0", "1", "1" 
+     .Wireframe "False" 
+     .Reflection "False" 
+     .Allowoutline "True" 
+     .Transparentoutline "False" 
+     .Transparency "0" 
+     .Create
+End With
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .StoreSolutionCoefficients "True" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+End With
+
+'@ delete shape: component1:solid12
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Solid.Delete "component1:solid12"
+
+'@ delete dimension 34
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .RemoveDimension "34"
+End With
+
+'@ define material: sub1
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Material 
+     .Reset 
+     .Name "sub1"
+     .Folder ""
+     .Rho "0.0"
+     .ThermalType "Normal"
+     .ThermalConductivity "0"
+     .SpecificHeat "0", "J/K/kg"
+     .DynamicViscosity "0"
+     .Emissivity "0"
+     .MetabolicRate "0.0"
+     .VoxelConvection "0.0"
+     .BloodFlow "0"
+     .MechanicsType "Unused"
+     .FrqType "all"
+     .Type "Normal"
+     .MaterialUnit "Frequency", "GHz"
+     .MaterialUnit "Geometry", "mm"
+     .MaterialUnit "Time", "ns"
+     .MaterialUnit "Temperature", "Kelvin"
+     .Epsilon "er1"
+     .Mu "1"
+     .Sigma "0.0"
+     .TanD "loss"
+     .TanDFreq "10"
+     .TanDGiven "True"
+     .TanDModel "ConstTanD"
+     .SetConstTanDStrategyEps "AutomaticOrder"
+     .ConstTanDModelOrderEps "3"
+     .DjordjevicSarkarUpperFreqEps "0"
+     .SetElParametricConductivity "False"
+     .ReferenceCoordSystem "Global"
+     .CoordSystemType "Cartesian"
+     .SigmaM "0"
+     .TanDM "0.0"
+     .TanDMFreq "0.0"
+     .TanDMGiven "False"
+     .TanDMModel "ConstTanD"
+     .SetConstTanDStrategyMu "AutomaticOrder"
+     .ConstTanDModelOrderMu "3"
+     .DjordjevicSarkarUpperFreqMu "0"
+     .SetMagParametricConductivity "False"
+     .DispModelEps "None"
+     .DispModelMu "None"
+     .DispersiveFittingSchemeEps "Nth Order"
+     .MaximalOrderNthModelFitEps "10"
+     .ErrorLimitNthModelFitEps "0.1"
+     .UseOnlyDataInSimFreqRangeNthModelEps "False"
+     .DispersiveFittingSchemeMu "Nth Order"
+     .MaximalOrderNthModelFitMu "10"
+     .ErrorLimitNthModelFitMu "0.1"
+     .UseOnlyDataInSimFreqRangeNthModelMu "False"
+     .UseGeneralDispersionEps "False"
+     .UseGeneralDispersionMu "False"
+     .NLAnisotropy "False"
+     .NLAStackingFactor "1"
+     .NLADirectionX "1"
+     .NLADirectionY "0"
+     .NLADirectionZ "0"
+     .Colour "0", "1", "1" 
+     .Wireframe "False" 
+     .Reflection "False" 
+     .Allowoutline "True" 
+     .Transparentoutline "False" 
+     .Transparency "0" 
+     .Create
+End With
+
+'@ pick edge
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "10", "10"
+
+'@ define distance dimension
+
+'[VERSION]2021.5|30.0.1|20210628[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "40"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.950383"
+    .SetViewVector "-0.729460", "-0.300754", "-0.614357"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ allow single precision direct solver (for backward compatibility)
+
+'[VERSION]2024.1|33.0.1|20231016[/VERSION]
+FDSolver.SetAllowFloatDirectSolver "True"
+
+'@ set keep solution coefficients mode (for backward compatibility)
+
+'[VERSION]2024.1|33.0.1|20231016[/VERSION]
+FDSolver.SetKeepSolutionCoefficients "All"
+
+'@ define cylinder: component1:solid16
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid16" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .OuterRadius "rvia" 
+     .InnerRadius "0.0" 
+     .Axis "z" 
+     .Zrange "z1+z2+z3", "z1+z2*2+z3" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ transform: rotate component1:solid16
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid16" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "3" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ boolean subtract shapes: component1:solid4, component1:solid16
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Subtract "component1:solid4", "component1:solid16"
+
+'@ boolean subtract shapes: component1:solid4_1, component1:solid16_1
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Subtract "component1:solid4_1", "component1:solid16_1"
+
+'@ boolean subtract shapes: component1:solid4_2, component1:solid16_2
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Subtract "component1:solid4_2", "component1:solid16_2"
+
+'@ boolean subtract shapes: component1:solid4_3, component1:solid16_3
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Subtract "component1:solid4_3", "component1:solid16_3"
+
+'@ define cylinder: component1:solid16
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid16" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .OuterRadius "rpin" 
+     .InnerRadius "0.0" 
+     .Axis "z" 
+     .Zrange "-z5-z2*2", "z1+z2+z3+z2+zl" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ define material: Lead
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Material
+     .Reset
+     .Name "Lead"
+     .Folder ""
+     .FrqType "all"
+     .Type "Lossy metal"
+     .SetMaterialUnit "GHz", "mm"
+     .Mu "0.999983"
+     .Kappa "4.8e6"
+     .Rho "11340"
+     .ThermalType "Normal"
+     .ThermalConductivity "34.7"
+     .SpecificHeat "130", "J/K/kg"
+     .MetabolicRate "0"
+     .BloodFlow "0"
+     .VoxelConvection "0"
+     .MechanicsType "Isotropic"
+     .YoungsModulus "14"
+     .PoissonsRatio "0.42"
+     .ThermalExpansionRate "29.1"
+     .FrqType "static"
+     .Type "Normal"
+     .SetMaterialUnit "GHz", "mm"
+     .Epsilon "1"
+     .Mu "0.999983"
+     .Kappa "4.8e6"
+     .TanD "0.0"
+     .TanDFreq "0.0"
+     .TanDGiven "False"
+     .TanDModel "ConstTanD"
+     .KappaM "0"
+     .TanDM "0.0"
+     .TanDMFreq "0.0"
+     .TanDMGiven "False"
+     .TanDMModel "ConstTanD"
+     .DispModelEps "None"
+     .DispModelMu "None"
+     .DispersiveFittingSchemeEps "Nth Order"
+     .DispersiveFittingSchemeMu "Nth Order"
+     .UseGeneralDispersionEps "False"
+     .UseGeneralDispersionMu "False"
+     .Colour "0.501961", "0", "1"
+     .Wireframe "False"
+     .Reflection "False"
+     .Allowoutline "True"
+     .Transparentoutline "False"
+     .Transparency "0"
+     .Create
+End With
+
+'@ change material: component1:solid16 to: Lead
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid16", "Lead"
+
+'@ transform: rotate component1:solid16
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid16" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ transform: rotate component1:solid16
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid16" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "180" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ delete shape: component1:solid7
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Delete "component1:solid7"
+
+'@ delete dimension 5
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "5"
+End With
+
+'@ define material: Silicon (lossy)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Material
+     .Reset
+     .Name "Silicon (lossy)"
+     .Folder ""
+     .FrqType "all"
+     .Type "Normal"
+     .SetMaterialUnit "GHz", "mm"
+     .Epsilon "11.9"
+     .Mu "1.0"
+     .Kappa "2.5e-004"
+     .TanD "0.00"
+     .TanDFreq "0.0"
+     .TanDGiven "False"
+     .TanDModel "ConstTanD"
+     .KappaM "0.0"
+     .TanDM "0.0"
+     .TanDMFreq "0.0"
+     .TanDMGiven "False"
+     .TanDMModel "ConstKappa"
+     .DispModelEps "None"
+     .DispModelMu "None"
+     .DispersiveFittingSchemeEps "General 1st"
+     .DispersiveFittingSchemeMu "General 1st"
+     .UseGeneralDispersionEps "False"
+     .UseGeneralDispersionMu "False"
+     .Rho "2330.0"
+     .ThermalType "Normal"
+     .ThermalConductivity "148"
+     .SpecificHeat "700", "J/K/kg"
+     .SetActiveMaterial "all"
+     .MechanicsType "Isotropic"
+     .YoungsModulus "112"
+     .PoissonsRatio "0.28"
+     .ThermalExpansionRate "5.1"
+     .Colour "0.94", "0.82", "0.76"
+     .Wireframe "False"
+     .Transparency "0"
+     .Create
+End With
+
+'@ change material: component1:solid1 to: Silicon (lossy)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid1", "Silicon (lossy)"
+
+'@ change material: component1:solid16 to: Copper (annealed)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid16", "Copper (annealed)"
+
+'@ change material: component1:solid16_1 to: Copper (annealed)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid16_1", "Copper (annealed)"
+
+'@ define cylinder: component1:solid17
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid17" 
+     .Component "component1" 
+     .Material "Lead" 
+     .OuterRadius "rvia" 
+     .InnerRadius "rpin" 
+     .Axis "z" 
+     .Zrange "z1+z2+z3+z2", "z1+z2+z3+z2+zl" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ transform: rotate component1:solid17
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid17" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ transform: rotate component1:solid17
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid17" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "180" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ define brick: component1:solid18
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid18" 
+     .Component "component1" 
+     .Material "FR-4 (loss free)" 
+     .Xrange "-a/2", "a/2" 
+     .Yrange "-a/2", "a/2" 
+     .Zrange "-z5-z2", "-z2" 
+     .Create
+End With
+
+'@ define brick: component1:solid19
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid19" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-wg/2", "wg/2" 
+     .Yrange "-t/2", "t/2" 
+     .Zrange "z1+z2", "z1" 
+     .Create
+End With
+
+'@ transform: rotate component1:solid19
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid19" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "45" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ define brick: component1:solid20
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid20" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-wt/2", "wt/2" 
+     .Yrange "-a/2", "a/2" 
+     .Zrange "-z5-z2", "-z5-z2*2" 
+     .Create
+End With
+
+'@ define brick: component1:solid21
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid21" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-a/2", "a/2" 
+     .Yrange "-wt/2", "wt/2" 
+     .Zrange "0", "-z2" 
+     .Create
+End With
+
+'@ define cylinder: component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid22" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .OuterRadius "rvia" 
+     .InnerRadius "0.0" 
+     .Axis "z" 
+     .Zrange "-z5-z2", "-z2" 
+     .Xcenter "xvia" 
+     .Ycenter "yvia" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ transform: rotate component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid22" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "90" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ transform: rotate component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid22" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "180" 
+     .MultipleObjects "True" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Destination "" 
+     .Material "" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ boolean subtract shapes: component1:solid18, component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Subtract "component1:solid18", "component1:solid22"
+
+'@ boolean subtract shapes: component1:solid18, component1:solid22_1
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Subtract "component1:solid18", "component1:solid22_1"
+
+'@ define brick: component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid22" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-wt/2", "wt/2" 
+     .Yrange "-wc/2", "wc/2" 
+     .Zrange "-z5-z2", "-z5-z2*2" 
+     .Create
+End With
+
+'@ transform: translate component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid22" 
+     .Vector "0", "ychock", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ boolean subtract shapes: component1:solid20, component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Subtract "component1:solid20", "component1:solid22"
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid20", "33", "23"
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid20", "28", "17"
+
+'@ define lumped face element: Folder1:element3
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With LumpedFaceElement
+     .Reset 
+     .SetName "element3" 
+     .Folder "Folder1" 
+     .SetType "RLCSerial"
+     .SetR "10"
+     .SetL "0.5e-9"
+     .SetC "0"
+     .SetGs "0"
+     .SetI0 "1e-14"
+     .SetT "300"
+     .SetMonitor "True"
+     .CircuitFileName ""
+     .CircuitId "1"
+     .UseCopyOnly "True"
+     .UseRelativePath "False"
+     .SetP1 "True", "0", "1.3", "-0.86" 
+     .SetP2 "True", "0", "0.7", "-0.86" 
+     .SetInvert "False" 
+     .UseProjection "False" 
+     .ReverseProjection "False" 
+     .Create
+End With
+
+'@ define brick: component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid22" 
+     .Component "component1" 
+     .Material "Silicon (lossy)" 
+     .Xrange "-widcho", "widcho" 
+     .Yrange "-wc/2", "wc/2" 
+     .Zrange "-z5-z2*2", "-z5-z2*2-z6" 
+     .Create
+End With
+
+'@ transform: translate component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid22" 
+     .Vector "0", "ychock", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ set mesh properties (Tetrahedral)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Mesh 
+     .MeshType "Tetrahedral" 
+     .SetCreator "High Frequency"
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "Version", 1%
+     'MAX CELL - WAVELENGTH REFINEMENT 
+     .Set "StepsPerWaveNear", "4" 
+     .Set "StepsPerWaveFar", "4" 
+     .Set "PhaseErrorNear", "0.02" 
+     .Set "PhaseErrorFar", "0.02" 
+     .Set "CellsPerWavelengthPolicy", "automatic" 
+     'MAX CELL - GEOMETRY REFINEMENT 
+     .Set "StepsPerBoxNear", "1" 
+     .Set "StepsPerBoxFar", "0" 
+     .Set "ModelBoxDescrNear", "maxedge" 
+     .Set "ModelBoxDescrFar", "maxedge" 
+     'MIN CELL 
+     .Set "UseRatioLimit", "0" 
+     .Set "RatioLimit", "100" 
+     .Set "MinStep", "0" 
+     'MESHING METHOD 
+     .SetMeshType "Unstr" 
+     .Set "Method", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "CurvatureOrder", "1" 
+     .Set "CurvatureOrderPolicy", "automatic" 
+     .Set "CurvRefinementControl", "NormalTolerance" 
+     .Set "NormalTolerance", "22.5" 
+     .Set "SrfMeshGradation", "1.5" 
+     .Set "SrfMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "UseMaterials",  "1" 
+     .Set "MoveMesh", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "All" 
+     .Set "AutomaticEdgeRefinement",  "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "UseAnisoCurveRefinement", "1" 
+     .Set "UseSameSrfAndVolMeshGradation", "1" 
+     .Set "VolMeshGradation", "1.5" 
+     .Set "VolMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "SmallFeatureSize", "0" 
+     .Set "CoincidenceTolerance", "1e-06" 
+     .Set "SelfIntersectionCheck", "1" 
+     .Set "OptimizeForPlanarStructures", "0" 
+End With 
+With Mesh 
+     .SetParallelMesherMode "Tet", "maximum" 
+     .SetMaxParallelMesherThreads "Tet", "1" 
+End With
+
+'@ define frequency domain solver parameters
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Mesh.SetCreator "High Frequency" 
+
+With FDSolver
+     .Reset 
+     .SetMethod "Tetrahedral", "General purpose" 
+     .OrderTet "Second" 
+     .OrderSrf "First" 
+     .Stimulation "Zmax", "TE(0,0)" 
+     .ResetExcitationList 
+     .AutoNormImpedance "False" 
+     .NormingImpedance "50" 
+     .ModesOnly "False" 
+     .ConsiderPortLossesTet "True" 
+     .SetShieldAllPorts "False" 
+     .AccuracyHex "1e-6" 
+     .AccuracyTet "1e-4" 
+     .AccuracySrf "1e-3" 
+     .LimitIterations "False" 
+     .MaxIterations "0" 
+     .SetCalcBlockExcitationsInParallel "True", "True", "" 
+     .StoreAllResults "False" 
+     .StoreResultsInCache "False" 
+     .UseHelmholtzEquation "True" 
+     .LowFrequencyStabilization "True" 
+     .Type "Auto" 
+     .MeshAdaptionHex "False" 
+     .MeshAdaptionTet "True" 
+     .AcceleratedRestart "True" 
+     .FreqDistAdaptMode "Distributed" 
+     .NewIterativeSolver "True" 
+     .TDCompatibleMaterials "False" 
+     .ExtrudeOpenBC "True" 
+     .SetOpenBCTypeHex "Default" 
+     .SetOpenBCTypeTet "Default" 
+     .AddMonitorSamples "True" 
+     .CalcPowerLoss "True" 
+     .CalcPowerLossPerComponent "False" 
+     .SetKeepSolutionCoefficients "All" 
+     .UseDoublePrecision "False" 
+     .UseDoublePrecision_ML "True" 
+     .MixedOrderSrf "False" 
+     .MixedOrderTet "False" 
+     .PreconditionerAccuracyIntEq "0.15" 
+     .MLFMMAccuracy "Default" 
+     .MinMLFMMBoxSize "0.3" 
+     .UseCFIEForCPECIntEq "True" 
+     .UseEnhancedCFIE2 "True" 
+     .UseFastRCSSweepIntEq "false" 
+     .UseSensitivityAnalysis "False" 
+     .UseEnhancedNFSImprint "True" 
+     .UseFastDirectFFCalc "False" 
+     .RemoveAllStopCriteria "Hex"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Hex", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Hex", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Hex", "False"
+     .RemoveAllStopCriteria "Tet"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Tet", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Tet", "False"
+     .AddStopCriterion "All Probes", "0.05", "2", "Tet", "True"
+     .RemoveAllStopCriteria "Srf"
+     .AddStopCriterion "All S-Parameters", "0.01", "2", "Srf", "True"
+     .AddStopCriterion "Reflection S-Parameters", "0.01", "2", "Srf", "False"
+     .AddStopCriterion "Transmission S-Parameters", "0.01", "2", "Srf", "False"
+     .SweepMinimumSamples "3" 
+     .SetNumberOfResultDataSamples "1001" 
+     .SetResultDataSamplingMode "Automatic" 
+     .SweepWeightEvanescent "1.0" 
+     .AccuracyROM "1e-4" 
+     .AddSampleInterval "", "", "1", "Automatic", "True" 
+     .AddSampleInterval "", "", "", "Automatic", "False" 
+     .SetAllowFloatDirectSolver "True" 
+     .MPIParallelization "False"
+     .UseDistributedComputing "False"
+     .NetworkComputingStrategy "RunRemote"
+     .NetworkComputingJobCount "3"
+     .UseParallelization "False"
+     .MaxCPUs "1024"
+     .MaximumNumberOfCPUDevices "2"
+End With
+
+With IESolver
+     .Reset 
+     .UseFastFrequencySweep "True" 
+     .UseIEGroundPlane "False" 
+     .SetRealGroundMaterialName "" 
+     .CalcFarFieldInRealGround "False" 
+     .RealGroundModelType "Auto" 
+     .PreconditionerType "Auto" 
+     .ExtendThinWireModelByWireNubs "False" 
+     .ExtraPreconditioning "False" 
+End With
+
+With IESolver
+     .SetFMMFFCalcStopLevel "0" 
+     .SetFMMFFCalcNumInterpPoints "6" 
+     .UseFMMFarfieldCalc "True" 
+     .SetCFIEAlpha "0.500000" 
+     .LowFrequencyStabilization "False" 
+     .LowFrequencyStabilizationML "True" 
+     .Multilayer "False" 
+     .SetiMoMACC_I "0.0001" 
+     .SetiMoMACC_M "0.0001" 
+     .DeembedExternalPorts "True" 
+     .SetOpenBC_XY "True" 
+     .OldRCSSweepDefintion "False" 
+     .SetRCSOptimizationProperties "True", "100", "0.00001" 
+     .SetAccuracySetting "Custom" 
+     .CalculateSParaforFieldsources "True" 
+     .ModeTrackingCMA "True" 
+     .NumberOfModesCMA "3" 
+     .StartFrequencyCMA "-1.0" 
+     .SetAccuracySettingCMA "Default" 
+     .FrequencySamplesCMA "0" 
+     .SetMemSettingCMA "Auto" 
+     .CalculateModalWeightingCoefficientsCMA "True" 
+     .DetectThinDielectrics "True" 
+End With
+
+'@ change material: component1:solid16 to: Copper (annealed)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid16", "Copper (annealed)"
+
+'@ change material: component1:solid17_1 to: Copper (annealed)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid17_1", "Copper (annealed)"
+
+'@ change material: component1:solid17 to: Copper (annealed)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid17", "Copper (annealed)"
+
+'@ change material: component1:solid21 to: Vacuum
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid21", "Vacuum"
+
+'@ transform: translate component1:solid21
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid21" 
+     .Vector "0", "ygate", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ change material: component1:solid17_1 to: Lead
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid17_1", "Lead"
+
+'@ change material: component1:solid17 to: Lead
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid17", "Lead"
+
+'@ transform: translate component1:solid20
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid20" 
+     .Vector "xvia", "0", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform: translate component1:solid22
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid22" 
+     .Vector "xvia", "0", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Translate" 
+End With
+
+'@ transform lumped element: translate Folder1
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "Folder1" 
+     .Vector "xvia", "0", "0" 
+     .UsePickedPoints "False" 
+     .InvertPickedPoints "False" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .Transform "LumpedElement", "Translate" 
+End With
+
+'@ change material: component1:solid21 to: Copper (annealed)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.ChangeMaterial "component1:solid21", "Copper (annealed)"
+
+'@ define cylinder: component1:solid23
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid23" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .OuterRadius "rvia" 
+     .InnerRadius "0.0" 
+     .Axis "z" 
+     .Zrange "-z2", "-z2-z5" 
+     .Xcenter "xgate" 
+     .Ycenter "ygate" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ boolean subtract shapes: component1:solid18, component1:solid23
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Subtract "component1:solid18", "component1:solid23"
+
+'@ define cylinder: component1:solid23
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Cylinder 
+     .Reset 
+     .Name "solid23" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .OuterRadius "rvia" 
+     .InnerRadius "0.0" 
+     .Axis "z" 
+     .Zrange "0", "-z5-z2*2" 
+     .Xcenter "xgate" 
+     .Ycenter "ygate" 
+     .Segments "0" 
+     .Create 
+End With
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid1", "22", "13"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "41"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.603185"
+    .SetViewVector "-0.817789", "0.127202", "0.561286"
+    .SetConnectedElement1 "component1:solid1"
+    .SetConnectedElement2 "component1:solid1"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ define brick: component1:solid24
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Brick
+     .Reset 
+     .Name "solid24" 
+     .Component "component1" 
+     .Material "Copper (annealed)" 
+     .Xrange "-s/2", "s/2" 
+     .Yrange "-ws/2", "ws/2" 
+     .Zrange "z1", "z1+z2" 
+     .Create
+End With
+
+'@ transform: rotate component1:solid24
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Transform 
+     .Reset 
+     .Name "component1:solid24" 
+     .Origin "Free" 
+     .Center "0", "0", "0" 
+     .Angle "0", "0", "-45" 
+     .MultipleObjects "False" 
+     .GroupObjects "False" 
+     .Repetitions "1" 
+     .MultipleSelection "False" 
+     .AutoDestination "True" 
+     .Transform "Shape", "Rotate" 
+End With
+
+'@ boolean subtract shapes: component1:solid2, component1:solid24
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Subtract "component1:solid2", "component1:solid24"
+
+'@ delete dimension 30
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "30"
+End With
+
+'@ delete dimension 40
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "40"
+End With
+
+'@ delete dimension 7
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "7"
+End With
+
+'@ delete dimension 8
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "8"
+End With
+
+'@ delete dimension 21
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "21"
+End With
+
+'@ delete dimension 37
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "37"
+End With
+
+'@ delete dimension 16
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "16"
+End With
+
+'@ delete dimension 15
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "15"
+End With
+
+'@ delete dimension 11
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "11"
+End With
+
+'@ delete dimension 38
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "38"
+End With
+
+'@ delete dimension 26
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "26"
+End With
+
+'@ delete dimension 2
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "2"
+End With
+
+'@ delete dimension 1
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "1"
+End With
+
+'@ delete dimension 4
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "4"
+End With
+
+'@ delete dimension 23
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "23"
+End With
+
+'@ delete dimension 29
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "29"
+End With
+
+'@ delete dimension 12
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "12"
+End With
+
+'@ delete dimension 10
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "10"
+End With
+
+'@ delete dimension 17
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "17"
+End With
+
+'@ delete dimension 3
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "3"
+End With
+
+'@ delete dimension 0
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "0"
+End With
+
+'@ delete dimension 6
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "6"
+End With
+
+'@ delete dimension 9
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "9"
+End With
+
+'@ delete dimension 14
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "14"
+End With
+
+'@ delete dimension 36
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "36"
+End With
+
+'@ delete dimension 28
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "28"
+End With
+
+'@ delete dimension 35
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "35"
+End With
+
+'@ delete dimension 33
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "33"
+End With
+
+'@ delete dimension 18
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "18"
+End With
+
+'@ delete dimension 39
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "39"
+End With
+
+'@ delete dimension 41
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "41"
+End With
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid2", "26", "22"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "42"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.853335"
+    .SetViewVector "-0.345004", "-0.105686", "-0.932632"
+    .SetConnectedElement1 "component1:solid2"
+    .SetConnectedElement2 "component1:solid2"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ boolean add shapes: component1:solid13, component1:solid13_1
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Add "component1:solid13", "component1:solid13_1"
+
+'@ boolean add shapes: component1:solid13_2, component1:solid13_3
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Add "component1:solid13_2", "component1:solid13_3"
+
+'@ boolean add shapes: component1:solid4, component1:solid4_1
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Add "component1:solid4", "component1:solid4_1"
+
+'@ boolean add shapes: component1:solid4_2, component1:solid4_3
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Add "component1:solid4_2", "component1:solid4_3"
+
+'@ boolean add shapes: component1:solid13, component1:solid13_2
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Add "component1:solid13", "component1:solid13_2"
+
+'@ boolean add shapes: component1:solid4, component1:solid4_2
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Add "component1:solid4", "component1:solid4_2"
+
+'@ boolean add shapes: component1:solid13, component1:solid4
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Add "component1:solid13", "component1:solid4"
+
+'@ activate local coordinates
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+WCS.ActivateWCS "local"
+
+'@ set wcs properties
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With WCS
+     .SetNormal "0", "0", "1"
+     .SetOrigin "0", "0", "z1+z2+z3"
+     .SetUVector "1", "0", "0"
+End With
+
+'@ activate global coordinates
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+WCS.ActivateWCS "global"
+
+'@ activate local coordinates
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+WCS.ActivateWCS "local"
+
+'@ set wcs properties
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With WCS
+     .SetNormal "0", "0", "1"
+     .SetOrigin "0", "0", "z1+z2+z3+z2"
+     .SetUVector "1", "0", "0"
+End With
+
+'@ activate global coordinates
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+WCS.ActivateWCS "global"
+
+'@ activate local coordinates
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+WCS.ActivateWCS "local"
+
+'@ set wcs properties
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With WCS
+     .SetNormal "0", "0", "1"
+     .SetOrigin "0", "0", "z1"
+     .SetUVector "1", "0", "0"
+End With
+
+'@ boolean add shapes: component1:solid19, component1:solid2
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Solid.Add "component1:solid19", "component1:solid2"
+
+'@ delete dimension 42
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "42"
+End With
+
+'@ set wcs properties
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With WCS
+     .SetNormal "0", "0", "1"
+     .SetOrigin "0", "0", "-z5-z2*2"
+     .SetUVector "1", "0", "0"
+End With
+
+'@ activate global coordinates
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+WCS.ActivateWCS "global"
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "16", "16"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "43"
+    .SetOrientation "Smart Mode"
+    .SetDistance "9.171563"
+    .SetViewVector "-0.325297", "-0.240122", "-0.914617"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "32"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "35"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "44"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.195677"
+    .SetViewVector "-0.324870", "-0.095446", "0.940930"
+    .SetConnectedElement1 "component1:solid19"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ clear picks
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "3", "3", "2"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "1", "2", "2"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "45"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.010818"
+    .SetViewVector "-0.999190", "-0.010158", "-0.038942"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 44
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "44"
+End With
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "42"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "37"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "46"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.219908"
+    .SetViewVector "-0.570878", "-0.218166", "0.791518"
+    .SetConnectedElement1 "component1:solid19"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "32"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "35"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "47"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.136594"
+    .SetViewVector "-0.579376", "-0.175554", "0.795930"
+    .SetConnectedElement1 "component1:solid19"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid15", "1", "2", "0"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid15", "1", "2", "2"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "48"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.431533"
+    .SetViewVector "0.106235", "0.051925", "0.992984"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid15", "2", "1", "0"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid15", "2", "1", "2"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "49"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.000092"
+    .SetViewVector "-0.009702", "0.012781", "0.999871"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "50"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.171123"
+    .SetViewVector "-0.796758", "-0.082926", "0.598582"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "95"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "13"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "51"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.286573"
+    .SetViewVector "-0.396949", "-0.095802", "-0.912827"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "11", "11"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "52"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.747198"
+    .SetViewVector "0.000000", "-0.000020", "-1.000000"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 52
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "52"
+End With
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid13", "105", "82"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "53"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.399400"
+    .SetViewVector "0.000000", "-0.000006", "-1.000000"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid13", "169", "129"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "54"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.795299"
+    .SetViewVector "0.000000", "-0.000006", "-1.000000"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "40"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "24"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "55"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.282311"
+    .SetViewVector "0.000000", "-0.000001", "-1.000000"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 55
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "55"
+End With
+
+'@ delete dimension 54
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "54"
+End With
+
+'@ delete dimension 53
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "53"
+End With
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "13", "9"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "56"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.112266"
+    .SetViewVector "-0.000000", "-0.000002", "-1.000000"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid6", "12"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid6", "4"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "57"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.166414"
+    .SetViewVector "-0.000000", "-0.000002", "-1.000000"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "2", "2"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "58"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.274341"
+    .SetViewVector "-0.075046", "0.022264", "-0.996931"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "69"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "39"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "59"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.537369"
+    .SetViewVector "-0.075046", "0.022264", "-0.996931"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 56
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "56"
+End With
+
+'@ delete dimension 58
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "58"
+End With
+
+'@ delete dimension 59
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "59"
+End With
+
+'@ delete dimension 57
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "57"
+End With
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "3", "3", "2"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid18", "20", "10", "2"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "60"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.334151"
+    .SetViewVector "0.006981", "-0.000001", "-0.999976"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 60
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "60"
+End With
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "3", "3", "2"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "3", "3", "0"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "61"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.108971"
+    .SetViewVector "0.006981", "0.003489", "-0.999970"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 61
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "61"
+End With
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "4", "4", "0"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "4", "4", "2"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "62"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.069089"
+    .SetViewVector "0.006981", "0.003489", "-0.999970"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 62
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "62"
+End With
+
+'@ delete dimension 43
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "43"
+End With
+
+'@ delete dimension 50
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "50"
+End With
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "36"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "31"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "63"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.673651"
+    .SetViewVector "0.000000", "-0.000004", "-1.000000"
+    .SetConnectedElement1 "component1:solid19"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 63
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "63"
+End With
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid19", "50", "38"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "64"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-2.426135"
+    .SetViewVector "0.000000", "-0.000004", "-1.000000"
+    .SetConnectedElement1 "component1:solid19"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid18", "20", "10", "0"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid18", "20", "10", "2"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "65"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.142460"
+    .SetViewVector "0.000000", "-0.000001", "-1.000000"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "31"
+
+'@ delete dimension 65
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "65"
+End With
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid18", "20", "10", "0"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "66"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.160795"
+    .SetViewVector "-0.000000", "-0.000002", "-1.000000"
+    .SetConnectedElement1 "component1:solid19"
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 66
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "66"
+End With
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "4", "4", "2"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid14", "4"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "67"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.353095"
+    .SetViewVector "-0.000000", "-0.000001", "-1.000000"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 "component1:solid14"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 67
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "67"
+End With
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "16", "16"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "68"
+    .SetOrientation "Smart Mode"
+    .SetDistance "6.925711"
+    .SetViewVector "-0.400509", "-0.187923", "-0.896815"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "70"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "42"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "69"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-1.248637"
+    .SetViewVector "-0.000000", "0.013957", "-0.999903"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "132"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "76"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "70"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.785627"
+    .SetViewVector "0.000000", "0.013951", "-0.999903"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid13", "87", "67"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "71"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.656107"
+    .SetViewVector "-0.314986", "-0.006112", "-0.949076"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "72"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-1.089561"
+    .SetViewVector "-0.839972", "-0.236752", "-0.488258"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ clear picks
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid3", "10"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "22"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "73"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.076413"
+    .SetViewVector "-0.822513", "-0.256504", "-0.507621"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ delete dimension 73
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "73"
+End With
+
+'@ delete dimension 72
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .RemoveDimension "72"
+End With
+
+'@ set mesh properties (Tetrahedral)
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Mesh 
+     .MeshType "Tetrahedral" 
+     .SetCreator "High Frequency"
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "Version", 1%
+     'MAX CELL - WAVELENGTH REFINEMENT 
+     .Set "StepsPerWaveNear", "4" 
+     .Set "StepsPerWaveFar", "4" 
+     .Set "PhaseErrorNear", "0.02" 
+     .Set "PhaseErrorFar", "0.02" 
+     .Set "CellsPerWavelengthPolicy", "automatic" 
+     'MAX CELL - GEOMETRY REFINEMENT 
+     .Set "StepsPerBoxNear", "10" 
+     .Set "StepsPerBoxFar", "5" 
+     .Set "ModelBoxDescrNear", "maxedge" 
+     .Set "ModelBoxDescrFar", "maxedge" 
+     'MIN CELL 
+     .Set "UseRatioLimit", "0" 
+     .Set "RatioLimit", "100" 
+     .Set "MinStep", "10" 
+     'MESHING METHOD 
+     .SetMeshType "Unstr" 
+     .Set "Method", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "CurvatureOrder", "1" 
+     .Set "CurvatureOrderPolicy", "automatic" 
+     .Set "CurvRefinementControl", "NormalTolerance" 
+     .Set "NormalTolerance", "22.5" 
+     .Set "SrfMeshGradation", "1.5" 
+     .Set "SrfMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "UseMaterials",  "1" 
+     .Set "MoveMesh", "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "All" 
+     .Set "AutomaticEdgeRefinement",  "0" 
+End With 
+With MeshSettings 
+     .SetMeshType "Tet" 
+     .Set "UseAnisoCurveRefinement", "1" 
+     .Set "UseSameSrfAndVolMeshGradation", "1" 
+     .Set "VolMeshGradation", "1.5" 
+     .Set "VolMeshOptimization", "1" 
+End With 
+With MeshSettings 
+     .SetMeshType "Unstr" 
+     .Set "SmallFeatureSize", "0" 
+     .Set "CoincidenceTolerance", "1e-06" 
+     .Set "SelfIntersectionCheck", "1" 
+     .Set "OptimizeForPlanarStructures", "0" 
+End With 
+With Mesh 
+     .SetParallelMesherMode "Tet", "maximum" 
+     .SetMaxParallelMesherThreads "Tet", "1" 
+End With
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid13", "169", "129"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "72"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.560910"
+    .SetViewVector "-0.322841", "-0.251045", "-0.912552"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid13", "105", "82"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "73"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.042431"
+    .SetViewVector "-0.322841", "-0.251045", "-0.912552"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "13", "9"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "74"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.269083"
+    .SetViewVector "-0.169397", "0.133791", "-0.976424"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromIdOn "lumpeditem$element2", "2", "2"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "75"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.806155"
+    .SetViewVector "-0.169397", "0.133792", "-0.976424"
+    .SetConnectedElement1 "lumpeditem$element2"
+    .SetConnectedElement2 "lumpeditem$element2"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "69"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid13", "39"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "76"
+    .SetOrientation "Smart Mode"
+    .SetDistance "1.216899"
+    .SetViewVector "0.048942", "0.099639", "-0.993819"
+    .SetConnectedElement1 "component1:solid13"
+    .SetConnectedElement2 "component1:solid13"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid6", "4", "4"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "77"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.283204"
+    .SetViewVector "-0.295373", "0.252992", "-0.921276"
+    .SetConnectedElement1 "component1:solid6"
+    .SetConnectedElement2 "component1:solid6"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid17", "3"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "1", "2", "1"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "78"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.650229"
+    .SetViewVector "0.015026", "0.092144", "-0.995632"
+    .SetConnectedElement1 "component1:solid17"
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "4", "4", "0"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid17", "4", "4", "2"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "79"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.440297"
+    .SetViewVector "-0.073520", "0.228998", "-0.970647"
+    .SetConnectedElement1 ""
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid3", "20", "10"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "80"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-1.329155"
+    .SetViewVector "-0.950032", "-0.274017", "-0.149513"
+    .SetConnectedElement1 "component1:solid3"
+    .SetConnectedElement2 "component1:solid3"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid18", "15"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickExtraCirclepointFromId "component1:solid16_1", "1", "1", "1"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "81"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-1.588746"
+    .SetViewVector "0.077133", "-0.058810", "0.995285"
+    .SetConnectedElement1 "component1:solid18"
+    .SetConnectedElement2 ""
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid19", "50", "38"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "82"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.863863"
+    .SetViewVector "0.346607", "0.204647", "-0.915414"
+    .SetConnectedElement1 "component1:solid19"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEdgeFromId "component1:solid19", "49", "37"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "83"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-1.519433"
+    .SetViewVector "0.346607", "0.204647", "-0.915414"
+    .SetConnectedElement1 "component1:solid19"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "36"
+
+'@ pick end point
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+Pick.PickEndpointFromId "component1:solid19", "31"
+
+'@ define distance dimension
+
+'[VERSION]2024.2|33.0.1|20231215[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "84"
+    .SetOrientation "Smart Mode"
+    .SetDistance "-0.770021"
+    .SetViewVector "-0.009504", "-0.148356", "-0.988888"
+    .SetConnectedElement1 "component1:solid19"
+    .SetConnectedElement2 "component1:solid19"
+    .Create
+End With
+
+Pick.ClearAllPicks
+
+'@ pick edge
+
+'[VERSION]2024.3|33.0.1|20240223[/VERSION]
+Pick.PickEdgeFromId "component1:solid18", "8", "8"
+
+'@ define distance dimension
+
+'[VERSION]2024.3|33.0.1|20240223[/VERSION]
+With Dimension
+    .Reset
+    .CreationType "picks"
+    .SetType "Distance"
+    .SetID "85"
+    .SetOrientation "Smart Mode"
+    .SetDistance "0.959539"
+    .SetViewVector "-0.419066", "-0.269368", "-0.867078"
+    .SetConnectedElement1 "component1:solid18"
+    .SetConnectedElement2 "component1:solid18"
+    .Create
+End With
+
+Pick.ClearAllPicks
+

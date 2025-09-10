@@ -293,68 +293,72 @@ function executeButton_Callback(~, ~)
 end
 
 function calculate(theta, phi, portName, Delay, Rate, Size, N, M, frequency, index, r)
-    % Constants for calculation
-    c = 299792458; % Speed of light in vacuum (m/s)
-    f = frequency * 1e9; % Frequency (Hz)
-    lambda = c / f; % Wavelength (m)
-    k = 2 * pi / lambda; % Wave number
-    %r = 2; % distance to the receiver antenna in meters
-    dist = r; 
-    % Phase quantization levels
-    n = 10;
-    E = 2 * pi / 2^n * linspace(0, 2^n - 1, 2^n);
-    E(end + 1) = 2 * pi; % Ensure coverage of full phase range
+    % Constants
+    c = 299792458;                 % Speed of light (m/s)
+    f = frequency * 1e9;           % Frequency (Hz)
+    lambda = c / f;                % Wavelength (m)
+    k = 2 * pi / lambda;           % Wavenumber
+    dist = r;                      % UE range (m)
+    D = 0.4;                       % RIS aperture diameter (m)
+    offset_coeff = (pi * D^2) / (4 * lambda);   % (π D^2)/(4 λ)
 
-    % Convert angles from degrees to radians
-    thetaR = theta * pi / 180;
-    phiR = phi * pi / 180;
+    % Phase quantization (10-bit example)
+    nbits = 10;
+    E = 2 * pi / 2^nbits * linspace(0, 2^nbits - 1, 2^nbits);
+    E(end + 1) = 2 * pi;           % include wrap point
+
+    % Angles (Rx from UI; Tx assumed normal incidence)
+    thetaR = deg2rad(theta);
+    phiR   = deg2rad(phi);
+    thetaI = 0;                     % θ_i = 0
+    phiI   = 0;
 
     % Element spacing
-    du = 11.30e-3; % Element spacing (meters)
+    du = 11.30e-3; % meters
 
-    % Initialize RIS element positions
-    Q = zeros(M * N, 3); % Store 3D positions of RIS elements
-    for i = 1:M
-        for j = 1:N
-            idx = (i - 1) * N + j;
-            Q(idx, :) = [(i - 1) * du, (j - 1) * du, 0]; % Assume RIS lies in the XY plane at z=0
-        end
-    end
+    % RIS grid indices aligned from (0,0) like your original code
+    %jx = 0:(N-1);
+    %iy = 0:(M-1);
 
-    % Transmitter position (arbitrary fixed)
-    P_TX = [0, 0, 0];
+    % Physical coordinates (z=0 plane)
+    %[xg, yg] = meshgrid(jx*du, iy*du);
+    jx = (0:N-1) - (N-1)/2;                   % 1xN
+    iy = (0:M-1) - (M-1)/2;                   % 1xM
+    [xg, yg] = meshgrid(jx*du, iy*du);        % MxN grids (x along columns, y along rows)
 
-    % Receiver position based on given r, theta, phi
-    P_RX = dist * [cos(phiR) * sin(thetaR), sin(phiR) * sin(thetaR), cos(thetaR)];
+    % Transmitter (BS) and Receiver (UE) positions
+    dist_tx = 12;                   % BS range (m)
+    %P_TX = [0, 0, dist_tx];         % BS directly above origin
+    
+    cos2_theta_i = 1;               % θ_i = 0  ⇒ cos^2 θ_i = 1
+    cos2_theta_r = cos(thetaR)^2;   % θ_r = theta (UI)
+    offset = offset_coeff .* (cos2_theta_i ./ dist_tx + cos2_theta_r ./ r);
+    
+    d_focal = [0, 0, offset];
+    P_RX = dist * [cos(phiR)*sin(thetaR), sin(phiR)*sin(thetaR), cos(thetaR)];
 
-    % Compute near-field phase matrix
+
+    % Distances per element
+    d_TX = sqrt((xg - d_focal(1)).^2 + (yg - d_focal(2)).^2 + (0 - d_focal(3)).^2);
+    d_RX = sqrt((P_RX(1) - xg).^2 + (P_RX(2) - yg).^2 + (P_RX(3) - 0).^2);
+
+    % Phase per element: LaTeX Eq. (NF)
+    Psi = -k .* (d_TX + d_RX); 
+         % + offset_coeff .* (cos2_theta_i ./ d_TX + cos2_theta_r ./ d_RX);
+
+    % Wrap to [0, 2π)
+    Psi = mod(Psi, 2*pi);
+
+    % Quantize
     B = zeros(M, N);
-    beta_0 = 1; % Path loss constant (can be adjusted as needed)
-
     for i = 1:M
         for j = 1:N
-            idx = (i - 1) * N + j;
-
-            % Position of the p-th RIS element
-            Q_p = Q(idx, :);
-
-            % Distance from transmitter to RIS element
-            d_TX_p = norm(Q_p - P_TX);
-
-            % Distance from RIS element to receiver
-            d_p_RX = norm(Q_p - P_RX);
-
-            % Near-field phase for the p-th RIS element
-            phase_p = k * (d_TX_p + d_p_RX);
-            phase_p = mod(phase_p, 2 * pi); % Ensure phase wraps within [0, 2π]
-
-            % Quantize the phase
-            [~, p] = min(abs(E - phase_p));
-            B(i, j) = E(p);
+            [~, pidx] = min(abs(E - Psi(i,j)));
+            B(i,j) = E(pidx);
         end
     end
 
-    % Save and process the data
+    % Save / process
     processAndSaveData(B, portName, Delay, Rate, Size, M, N, index);
 end
 

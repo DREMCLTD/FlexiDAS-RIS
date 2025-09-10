@@ -1,0 +1,263 @@
+{
+    "parameters": [
+        {
+            "descr": "Rotation angle of E-field Vector (relative to x-axis)",
+            "expr": "0",
+            "name": "alpha",
+            "value": "0"
+        },
+        {
+            "descr": "spherical angle of incident plane wave",
+            "expr": "0",
+            "name": "theta",
+            "value": "0"
+        },
+        {
+            "descr": "spherical angle of incident plane wave",
+            "expr": "0",
+            "name": "phi",
+            "value": "0"
+        },
+        {
+            "expr": "b*2+.3",
+            "name": "a",
+            "value": "11.3"
+        },
+        {
+            "expr": "2",
+            "name": "z1",
+            "value": "2"
+        },
+        {
+            "expr": "0.07",
+            "name": "z2",
+            "value": "0.07"
+        },
+        {
+            "expr": "10.2",
+            "name": "er1",
+            "value": "10.2"
+        },
+        {
+            "expr": "3.175",
+            "name": "z3",
+            "value": "3.175"
+        },
+        {
+            "expr": "5.5",
+            "name": "b",
+            "value": "5.5"
+        },
+        {
+            "expr": "b/2+.075",
+            "name": "xc",
+            "value": "2.825"
+        },
+        {
+            "expr": "xc",
+            "name": "yc",
+            "value": "2.825"
+        },
+        {
+            "expr": "2",
+            "name": "d",
+            "value": "2"
+        },
+        {
+            "expr": "0.5",
+            "name": "wr",
+            "value": "0.5"
+        },
+        {
+            "expr": "1.5",
+            "name": "yr",
+            "value": "1.5"
+        },
+        {
+            "expr": "1",
+            "name": "yg",
+            "value": "1"
+        },
+        {
+            "expr": "0.5",
+            "name": "xv",
+            "value": "0.5"
+        },
+        {
+            "expr": "1",
+            "name": "yv",
+            "value": "1"
+        },
+        {
+            "expr": "0.3",
+            "name": "z4",
+            "value": "0.3"
+        },
+        {
+            "expr": "2.1e-12",
+            "name": "C",
+            "value": "2.1e-12"
+        },
+        {
+            "expr": "0.55/2",
+            "name": "rvia",
+            "value": "0.275"
+        },
+        {
+            "expr": "0.5",
+            "name": "xvia",
+            "value": "0.5"
+        },
+        {
+            "expr": "xvia",
+            "name": "yvia",
+            "value": "0.5"
+        },
+        {
+            "expr": "0.75/2",
+            "name": "hole",
+            "value": "0.375"
+        },
+        {
+            "expr": "1",
+            "name": "yd",
+            "value": "1"
+        },
+        {
+            "expr": "1.2",
+            "name": "yp",
+            "value": "1.2"
+        },
+        {
+            "expr": "b-0.2",
+            "name": "xvar",
+            "value": "5.3"
+        },
+        {
+            "expr": "0.5",
+            "name": "hr",
+            "value": "0.5"
+        },
+        {
+            "expr": "0.2",
+            "name": "xgap",
+            "value": "0.2"
+        },
+        {
+            "expr": "0.3",
+            "name": "wg",
+            "value": "0.3"
+        },
+        {
+            "expr": "d-0.4",
+            "name": "e",
+            "value": "1.6"
+        },
+        {
+            "expr": "e-1",
+            "name": "f",
+            "value": "0.6"
+        },
+        {
+            "expr": "f-0.2",
+            "name": "g",
+            "value": "0.4"
+        },
+        {
+            "expr": "g-0.5",
+            "name": "h",
+            "value": "-0.1"
+        },
+        {
+            "expr": ".3",
+            "name": "i",
+            "value": ".3"
+        },
+        {
+            "expr": "0.2",
+            "name": "j",
+            "value": "0.2"
+        },
+        {
+            "expr": "j-0.1",
+            "name": "o",
+            "value": "0.1"
+        },
+        {
+            "expr": "0.00125",
+            "name": "loss",
+            "value": "0.00125"
+        },
+        {
+            "expr": "0.4/2",
+            "name": "rpin",
+            "value": "0.2"
+        },
+        {
+            "expr": "1.5",
+            "name": "z5",
+            "value": "1.5"
+        },
+        {
+            "expr": "3",
+            "name": "p",
+            "value": "3"
+        },
+        {
+            "expr": "0.6",
+            "name": "wc",
+            "value": "0.6"
+        },
+        {
+            "expr": "1",
+            "name": "ychock",
+            "value": "1"
+        },
+        {
+            "expr": "0.25",
+            "name": "widcho",
+            "value": "0.25"
+        },
+        {
+            "expr": ".1",
+            "name": "z6",
+            "value": ".1"
+        },
+        {
+            "expr": "2",
+            "name": "ygate",
+            "value": "2"
+        },
+        {
+            "expr": "2",
+            "name": "xgate",
+            "value": "2"
+        },
+        {
+            "expr": "1",
+            "name": "s",
+            "value": "1"
+        },
+        {
+            "expr": "0.6",
+            "name": "ws",
+            "value": "0.6"
+        },
+        {
+            "expr": "1.5",
+            "name": "t",
+            "value": "1.5"
+        },
+        {
+            "expr": "0.5",
+            "name": "wt",
+            "value": "0.5"
+        },
+        {
+            "expr": "0.1",
+            "name": "zl",
+            "value": "0.1"
+        }
+    ],
+    "version": 1
+}
