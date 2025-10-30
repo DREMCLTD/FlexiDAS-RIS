@@ -293,72 +293,90 @@ function executeButton_Callback(~, ~)
 end
 
 function calculate(theta, phi, portName, Delay, Rate, Size, N, M, frequency, index, r)
+
     % Constants
-    c = 299792458;                 % Speed of light (m/s)
-    f = frequency * 1e9;           % Frequency (Hz)
-    lambda = c / f;                % Wavelength (m)
-    k = 2 * pi / lambda;           % Wavenumber
-    dist = r;                      % UE range (m)
-    D = 0.4;                       % RIS aperture diameter (m)
-    offset_coeff = (pi * D^2) / (4 * lambda);   % (π D^2)/(4 λ)
+    c   = 299792458;               % Speed of light (m/s)
+    lam = c / (frequency * 1e9);   % Wavelength (m)
+    k   = 2 * pi / lam;            % Wavenumber
+    du  = 11.3e-3;                 % Element spacing (m)
+    eta = 120 * pi; %#ok<NASGU>    % Free-space impedance (kept for interface)
 
-    % Phase quantization (10-bit example)
-    nbits = 10;
-    E = 2 * pi / 2^nbits * linspace(0, 2^nbits - 1, 2^nbits);
-    E(end + 1) = 2 * pi;           % include wrap point
-
-    % Angles (Rx from UI; Tx assumed normal incidence)
+    % ---- Geometry ----
+    % Rx position from spherical to Cartesian
     thetaR = deg2rad(theta);
     phiR   = deg2rad(phi);
-    thetaI = 0;                     % θ_i = 0
-    phiI   = 0;
+    x_rx   = r * cos(phiR) * sin(thetaR);
+    y_rx   = r * sin(phiR) * sin(thetaR);
+    z_rx   = r * cos(thetaR);
+    P_RX   = [x_rx, y_rx, z_rx];
 
-    % Element spacing
-    du = 11.30e-3; % meters
+    % BS position (set to your actual TX location)
+    P_TX   = [0, 0, -12];          % example: 12 m in front of RIS along -z
 
-    % RIS grid indices aligned from (0,0) like your original code
-    %jx = 0:(N-1);
-    %iy = 0:(M-1);
+    % RIS normal
+    n_hat  = [0, 0, 1];
 
-    % Physical coordinates (z=0 plane)
-    %[xg, yg] = meshgrid(jx*du, iy*du);
-    jx = (0:N-1) - (N-1)/2;                   % 1xN
-    iy = (0:M-1) - (M-1)/2;                   % 1xM
-    [xg, yg] = meshgrid(jx*du, iy*du);        % MxN grids (x along columns, y along rows)
+    % Linear term in Eq. (33) — use incidence angle at array center
+    u_inc_center = ([0,0,0] - P_TX);
+    u_inc_center = u_inc_center ./ norm(u_inc_center);
+    cos_theta_in = abs(dot(u_inc_center, n_hat));
+    theta_in_rad = acos(cos_theta_in);
 
-    % Transmitter (BS) and Receiver (UE) positions
-    dist_tx = 12;                   % BS range (m)
-    %P_TX = [0, 0, dist_tx];         % BS directly above origin
-    
-    cos2_theta_i = 1;               % θ_i = 0  ⇒ cos^2 θ_i = 1
-    cos2_theta_r = cos(thetaR)^2;   % θ_r = theta (UI)
-    offset = offset_coeff .* (cos2_theta_i ./ dist_tx + cos2_theta_r ./ r);
-    
-    d_focal = [0, 0, offset];
-    P_RX = dist * [cos(phiR)*sin(thetaR), sin(phiR)*sin(thetaR), cos(thetaR)];
+    % ---- Phase quantization ----
+    nbits = 10;
+    E = 2 * pi / 2^nbits * (0:2^nbits-1);
+    E(end+1) = 2 * pi;  % cover full range
 
+    % ---- Element index grid centered at zero ----
+    % columns (x-direction), rows (y-direction)
+    m = -floor(N/2) : floor((N-1)/2);
+    n = -floor(M/2) : floor((M-1)/2);
 
-    % Distances per element
-    d_TX = sqrt((xg - d_focal(1)).^2 + (yg - d_focal(2)).^2 + (0 - d_focal(3)).^2);
-    d_RX = sqrt((P_RX(1) - xg).^2 + (P_RX(2) - yg).^2 + (P_RX(3) - 0).^2);
-
-    % Phase per element: LaTeX Eq. (NF)
-    Psi = -k .* (d_TX + d_RX); 
-         % + offset_coeff .* (cos2_theta_i ./ d_TX + cos2_theta_r ./ d_RX);
-
-    % Wrap to [0, 2π)
-    Psi = mod(Psi, 2*pi);
-
-    % Quantize
+    % ---- Output phase matrix ----
     B = zeros(M, N);
-    for i = 1:M
-        for j = 1:N
-            [~, pidx] = min(abs(E - Psi(i,j)));
-            B(i,j) = E(pidx);
+
+    % ---- Compute phase for each RIS element ----
+    for a = 1:M
+        for b = 1:N
+            % Element coordinates (RIS is on z = 0 plane; origin at center)
+            xp = du * m(b);
+            yp = du * n(a);
+            Qp = [xp, yp, 0];
+
+            % Distances BS->elem and elem->UE
+            d_TX_p = norm(Qp - P_TX);
+            d_p_RX = norm(P_RX - Qp);
+
+            % Unit vectors for incidence/reflection at the element
+            u_inc = (Qp   - P_TX) / d_TX_p;   % arrival from BS
+            u_ref = (P_RX - Qp)   / d_p_RX;   % departure toward UE
+
+            % Cosines vs RIS normal
+            cos_ti = abs(dot(u_inc, n_hat));
+            cos_tr = abs(dot(u_ref, n_hat));
+
+            % ---- Eq. (33) spherical-focus phase (design term) ----
+            Rs      = d_p_RX;                 % distance element->UE
+            beta33  = -k * Rs + k * sin(theta_in_rad) * yp;
+
+            % ---- Element-wise quadratic phase (two-hop) ----
+            % ΔΦ_{m,n} = (k/2)*(x^2+y^2)*(cos^2θ_i/d_TX + cos^2θ_r/d_RX)
+            r2       = xp^2 + yp^2;
+            deltaPhi = 0.5 * k * r2 * ( (cos_ti^2)/d_TX_p + (cos_tr^2)/d_p_RX );
+
+            % ---- Combine: pre-compensate quadratic term ----
+            % Use '-' to CANCEL the quadratic error at the UE.
+            % If instead you want to MODEL the residual error after beamforming, use '+'
+            phase = mod(beta33 - deltaPhi, 2 * pi);
+
+            % Quantize
+            [~, idxq] = min(abs(E - phase));
+            B(a, b) = E(idxq);
+            if B(a, b) == 2*pi, B(a, b) = 0; end
         end
     end
 
-    % Save / process
+    % Store / export
     processAndSaveData(B, portName, Delay, Rate, Size, M, N, index);
 end
 
